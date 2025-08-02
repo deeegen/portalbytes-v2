@@ -20,17 +20,14 @@
         height: 100%;
         font-family: "Montserrat", sans-serif;
       }
-
       .fullscreen-iframe iframe {
         width: 100vw;
         height: 100vh;
         border: none;
       }
-
       .fullscreen-mode {
         overflow: hidden;
       }
-
       .loading-bg {
         position: absolute;
         top: 0;
@@ -43,19 +40,17 @@
         justify-content: center;
         flex-direction: column;
         z-index: 100;
+        cursor: pointer;
       }
-
       .loading-bg img {
         width: 64px;
         height: 64px;
       }
-
       .loading-text {
         color: white;
         margin-top: 10px;
         font-size: 1rem;
       }
-
       .proxy-iframe-wrapper {
         position: relative;
       }
@@ -65,9 +60,9 @@
   <body>
     <div class="proxy-container">
       <div class="proxy-header">
-        <span class="proxy-title">
-          Proxy Portal <span class="proxy-version">v2.1</span>
-        </span>
+        <span class="proxy-title"
+          >Proxy Portal <span class="proxy-version">v2.1</span></span
+        >
         <form
           id="searchForm"
           style="display: flex; align-items: center; gap: 8px"
@@ -106,7 +101,16 @@
       </div>
 
       <div class="proxy-iframe-wrapper">
-        <div class="loading-bg" id="loadingBg">
+        <div
+          class="loading-bg"
+          id="loadingBg"
+          style="
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+          "
+          title="Double-click to close loading overlay"
+        >
           <img src="/assets/star-spinning.gif" alt="Loading..." />
           <div class="loading-text">Loading...</div>
         </div>
@@ -117,8 +121,6 @@
         ></iframe>
       </div>
     </div>
-
-    <!-- ... (same HTML and CSS as before) -->
 
     <script>
       const iframe = document.getElementById("proxyIframe");
@@ -165,34 +167,30 @@
         loadingBg.style.display = "none";
 
         try {
-          // Inject script into iframe if same-origin
           const doc = iframe.contentDocument || iframe.contentWindow.document;
 
-          // Only inject if not already injected
           if (!doc.querySelector("#nav-monitor")) {
             const script = doc.createElement("script");
             script.id = "nav-monitor";
             script.textContent = `
-          document.body.addEventListener('click', (e) => {
-            const el = e.target.closest('a[href]');
-            if (el && el.href) {
-              window.parent.postMessage('iframe-start-loading', '*');
-            }
-          }, true);
+              document.body.addEventListener('click', (e) => {
+                const el = e.target.closest('a[href]');
+                if (el && el.href) {
+                  window.parent.postMessage('iframe-start-loading', '*');
+                }
+              }, true);
 
-          window.addEventListener('beforeunload', () => {
-            window.parent.postMessage('iframe-start-loading', '*');
-          });
-        `;
+              window.addEventListener('beforeunload', () => {
+                window.parent.postMessage('iframe-start-loading', '*');
+              });
+            `;
             doc.head.appendChild(script);
           }
         } catch (err) {
-          // Cross-origin; can't inject
           console.warn("Iframe script injection failed:", err);
         }
       };
 
-      // Receive message from iframe
       window.addEventListener("message", (event) => {
         if (event.data === "iframe-start-loading") {
           loadingBg.style.display = "flex";
@@ -218,7 +216,13 @@
         if (loadingText) loadingText.textContent = "No URL provided.";
       }
 
-      // Fullscreen logic (unchanged)
+      // Allow users to double-click the loading overlay to dismiss it
+      loadingBg.addEventListener("dblclick", () => {
+        loadingBg.style.display = "none";
+        const loadingText = loadingBg.querySelector(".loading-text");
+        if (loadingText) loadingText.textContent = "Loading...";
+      });
+
       const fullscreenBtn = document.getElementById("fullscreenToggle");
       const container = document.querySelector(".proxy-container");
 
