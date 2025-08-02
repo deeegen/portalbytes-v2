@@ -1,6 +1,6 @@
 // --- Bookmarks Core Logic ---
 const LOCAL_KEY = "portalBytesBookmarksV1";
-const EXAMPLES = [{ url: "https://github.com/deeegen", title: "" }];
+const EXAMPLES = [{ url: "https://duckduckgo.com", title: "" }];
 
 function normalizeInputUrl(rawInput) {
   let normalizedUrl;
