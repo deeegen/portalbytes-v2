@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PB x COR</title>
+    <link rel="icon" type="image/x-icon" href="/assets/favicon.ico" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Comic+Neue:wght@700&display=swap"
+      rel="stylesheet"
+    />
+    <link href="/assets/styles.css" rel="stylesheet" />
+  </head>
+  <body>
+    <div class="blob-container">
+      <div class="blob blob-yellow" aria-hidden="true"></div>
+      <div class="blob blob-pink" aria-hidden="true"></div>
+    </div>
+    <div class="main-container">
+      <div class="header">PortalBytes V2</div>
+      <div class="bar"></div>
+      <div class="search">
+        <input
+          id="input"
+          type="text"
+          placeholder="Enter URL with path (e.g., example.com/path/page.html)..."
+          maxlength="200"
+        />
+        <div class="icon-btn" onclick="go()" title="Visit">
+          <i class="fas fa-search"></i>
+        </div>
+        <div
+          class="icon-btn bookmark-btn"
+          onclick="addBookmarkFromInput()"
+          title="Add bookmark"
+        >
+          <i class="fas fa-bookmark"></i>
+        </div>
+        <div
+          class="icon-btn settings-btn"
+          id="settingsBtn"
+          title="Settings"
+          aria-label="Open settings"
+        >
+          <i class="fas fa-cog"></i>
+        </div>
+      </div>
+      <div class="bookmark-container">
+        <div class="bookmark-header">Bookmarks</div>
+        <div class="bookmarks-list" id="bookmarks-list">
+          <!-- Bookmarks will be rendered here -->
+        </div>
+      </div>
+      <div class="nav">
+        <a href="#">💾 Github</a>
+        <a href="#">🌐 About me</a>
+      </div>
+    </div>
+    <img src="assets/star-spinning.gif" width="64" height="64" class="pixel" />
+
+    <!-- Settings Modal -->
+    <div
+      id="settingsModal"
+      class="settings-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-hidden="true"
+    >
+      <div class="settings-modal-content">
+        <button
+          id="closeSettingsBtn"
+          class="close-settings-btn"
+          aria-label="Close settings"
+        >
+          &times;
+        </button>
+        <iframe
+          src="settings.html"
+          frameborder="0"
+          class="settings-iframe"
+          title="Settings"
+        ></iframe>
+      </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/js/all.min.js"></script>
+    <script src="/assets/main.js"></script>
+    <script src="/assets/settings-modal.js"></script>
+    <script src="/assets/bookmarks-core.js"></script>
+  </body>
+</html>
