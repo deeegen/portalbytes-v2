@@ -12,13 +12,61 @@
       rel="stylesheet"
     />
     <link href="/assets/proxy.css" rel="stylesheet" />
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        font-family: "Montserrat", sans-serif;
+      }
+
+      .fullscreen-iframe iframe {
+        width: 100vw;
+        height: 100vh;
+        border: none;
+      }
+
+      .fullscreen-mode {
+        overflow: hidden;
+      }
+
+      .loading-bg {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 90vh;
+        background-color: rgba(0, 0, 0, 0.6);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        z-index: 100;
+      }
+
+      .loading-bg img {
+        width: 64px;
+        height: 64px;
+      }
+
+      .loading-text {
+        color: white;
+        margin-top: 10px;
+        font-size: 1rem;
+      }
+
+      .proxy-iframe-wrapper {
+        position: relative;
+      }
+    </style>
   </head>
 
   <body>
     <div class="proxy-container">
       <div class="proxy-header">
-        <span class="proxy-title"
-          >Proxy Portal <span class="proxy-version">v2.1</span>
+        <span class="proxy-title">
+          Proxy Portal <span class="proxy-version">v2.1</span>
         </span>
         <form
           id="searchForm"
@@ -35,6 +83,7 @@
               width: 240px;
               font-size: 0.9rem;
             "
+            autocomplete="off"
           />
           <button
             type="submit"
@@ -51,46 +100,30 @@
             Go
           </button>
         </form>
-        <button id="fullscreenToggle">
+        <button id="fullscreenToggle" aria-label="Toggle Fullscreen">
           <i class="bi bi-fullscreen"></i>
         </button>
       </div>
+
       <div class="proxy-iframe-wrapper">
         <div class="loading-bg" id="loadingBg">
-          <img src="../assets/star-spinning.gif" alt="Loading..." />
+          <img src="/assets/star-spinning.gif" alt="Loading..." />
           <div class="loading-text">Loading...</div>
         </div>
-        <iframe id="proxyIframe" allowfullscreen></iframe>
+        <iframe
+          id="proxyIframe"
+          allowfullscreen
+          style="width: 100%; height: 90vh; border: none"
+        ></iframe>
       </div>
     </div>
+
+    <!-- ... (same HTML and CSS as before) -->
 
     <script>
       const iframe = document.getElementById("proxyIframe");
       const loadingBg = document.getElementById("loadingBg");
-
-      function goToUrl(newUrl) {
-        if (!newUrl) return;
-
-        newUrl = newUrl.trim();
-        const isUrl = validateAndProcessUrl(newUrl);
-
-        let targetUrl;
-        if (isUrl) {
-          targetUrl = /^https?:\/\//i.test(newUrl)
-            ? newUrl
-            : "https://" + newUrl;
-        } else {
-          targetUrl = "https://www.qwant.com/?q=" + encodeURIComponent(newUrl);
-        }
-
-        const encoded = encodeURIComponent(targetUrl);
-        loadingBg.style.display = "flex";
-        iframe.src = "/service/gateway?url=" + encoded;
-        sessionStorage.setItem("proxyUrl", targetUrl);
-        iframe.onload = function () {
-          loadingBg.style.display = "none";
-        };
-      }
+      const urlInput = document.getElementById("urlInput");
 
       function validateAndProcessUrl(input) {
         const patterns = [
@@ -103,60 +136,134 @@
         return patterns.some((pattern) => pattern.test(input));
       }
 
+      function goToUrl(rawUrl) {
+        if (!rawUrl) return;
+
+        const cleaned = rawUrl.trim();
+        const isUrl = validateAndProcessUrl(cleaned);
+
+        let targetUrl = isUrl
+          ? /^https?:\/\//i.test(cleaned)
+            ? cleaned
+            : "https://" + cleaned
+          : "https://www.qwant.com/?q=" + encodeURIComponent(cleaned);
+
+        const encoded = encodeURIComponent(targetUrl);
+
+        loadingBg.style.display = "flex";
+
+        try {
+          iframe.src = "/service/gateway?url=" + encoded;
+          sessionStorage.setItem("proxyUrl", targetUrl);
+        } catch (err) {
+          loadingBg.style.display = "none";
+          console.error("Failed to set iframe source:", err);
+        }
+      }
+
+      iframe.onload = function () {
+        loadingBg.style.display = "none";
+
+        try {
+          // Inject script into iframe if same-origin
+          const doc = iframe.contentDocument || iframe.contentWindow.document;
+
+          // Only inject if not already injected
+          if (!doc.querySelector("#nav-monitor")) {
+            const script = doc.createElement("script");
+            script.id = "nav-monitor";
+            script.textContent = `
+          document.body.addEventListener('click', (e) => {
+            const el = e.target.closest('a[href]');
+            if (el && el.href) {
+              window.parent.postMessage('iframe-start-loading', '*');
+            }
+          }, true);
+
+          window.addEventListener('beforeunload', () => {
+            window.parent.postMessage('iframe-start-loading', '*');
+          });
+        `;
+            doc.head.appendChild(script);
+          }
+        } catch (err) {
+          // Cross-origin; can't inject
+          console.warn("Iframe script injection failed:", err);
+        }
+      };
+
+      // Receive message from iframe
+      window.addEventListener("message", (event) => {
+        if (event.data === "iframe-start-loading") {
+          loadingBg.style.display = "flex";
+        }
+      });
+
+      document.getElementById("searchForm").addEventListener("submit", (e) => {
+        e.preventDefault();
+        if (!urlInput) return;
+        const inputUrl = urlInput.value.trim();
+        if (inputUrl) goToUrl(inputUrl);
+      });
+
       const savedUrl =
         sessionStorage.getItem("proxyUrl") ||
         sessionStorage.getItem("gatewayUrl");
 
-      if (savedUrl) {
+      if (savedUrl && typeof savedUrl === "string") {
         goToUrl(savedUrl);
       } else {
-        loadingBg.querySelector(".loading-text").textContent =
-          "No URL provided.";
+        loadingBg.style.display = "flex";
+        const loadingText = loadingBg.querySelector(".loading-text");
+        if (loadingText) loadingText.textContent = "No URL provided.";
       }
 
-      document.getElementById("searchForm").addEventListener("submit", (e) => {
-        e.preventDefault();
-        const inputUrl = document.getElementById("urlInput").value.trim();
-        if (inputUrl) goToUrl(inputUrl);
-      });
-
+      // Fullscreen logic (unchanged)
       const fullscreenBtn = document.getElementById("fullscreenToggle");
       const container = document.querySelector(".proxy-container");
 
       fullscreenBtn.addEventListener("click", () => {
+        if (!container) return;
+
         const isFullscreen = container.classList.toggle("fullscreen-iframe");
         document.body.classList.toggle("fullscreen-mode", isFullscreen);
+
         const icon = fullscreenBtn.querySelector("i");
-        if (isFullscreen) {
-          icon.classList.remove("bi-fullscreen");
-          icon.classList.add("bi-fullscreen-exit");
-        } else {
-          icon.classList.remove("bi-fullscreen-exit");
-          icon.classList.add("bi-fullscreen");
+        if (icon) {
+          icon.classList.toggle("bi-fullscreen", !isFullscreen);
+          icon.classList.toggle("bi-fullscreen-exit", isFullscreen);
         }
 
         const header = document.querySelector(".proxy-header");
-        header.style.display = isFullscreen ? "none" : "flex";
+        if (header) {
+          header.style.display = isFullscreen ? "none" : "flex";
+        }
       });
 
       document.addEventListener("keydown", (e) => {
-        if (e.key === "Escape") {
-          const isFullscreen =
-            container.classList.contains("fullscreen-iframe");
-          if (isFullscreen) {
-            container.classList.remove("fullscreen-iframe");
-            document.body.classList.remove("fullscreen-mode");
-            const header = document.querySelector(".proxy-header");
-            header.style.display = "flex";
+        if (
+          e.key === "Escape" &&
+          container.classList.contains("fullscreen-iframe")
+        ) {
+          container.classList.remove("fullscreen-iframe");
+          document.body.classList.remove("fullscreen-mode");
 
-            const icon = fullscreenBtn.querySelector("i");
+          const header = document.querySelector(".proxy-header");
+          if (header) header.style.display = "flex";
+
+          const icon = fullscreenBtn.querySelector("i");
+          if (icon) {
             icon.classList.remove("bi-fullscreen-exit");
             icon.classList.add("bi-fullscreen");
           }
         }
       });
 
-      history.replaceState({}, "", location.origin + "/");
+      try {
+        history.replaceState({}, "", location.origin + "/");
+      } catch (e) {
+        console.warn("Failed to update browser history:", e);
+      }
     </script>
   </body>
 </html>
