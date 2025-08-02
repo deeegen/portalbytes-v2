@@ -139,3 +139,99 @@ document.addEventListener("DOMContentLoaded", async () => {
     console.warn("Input field not found.");
   }
 });
+
+// ===== Keybind Redirect Logic - Runs only on top-level index.html =====
+(function () {
+  const DEFAULT_KEYBIND = "ctrl+shift+r";
+
+  function parseKeybind(str) {
+    return str.toLowerCase().replace(/\s+/g, "").split("+").sort().join("+");
+  }
+
+  document.addEventListener("keydown", (e) => {
+    // Only run if top-level page is index.html
+    if (
+      !window.top.location.pathname.endsWith("index.html") &&
+      window.top.location.pathname !== "/"
+    ) {
+      return;
+    }
+
+    const parts = [];
+    if (e.ctrlKey) parts.push("ctrl");
+    if (e.shiftKey) parts.push("shift");
+    if (e.altKey) parts.push("alt");
+    if (e.metaKey) parts.push("meta");
+
+    const key = e.key.length === 1 ? e.key.toLowerCase() : e.key.toLowerCase();
+    if (!["control", "shift", "alt", "meta"].includes(key)) {
+      parts.push(key);
+    }
+
+    const pressed = parts.sort().join("+");
+
+    const customEnabled =
+      localStorage.getItem("custom_keybind_enabled") === "true";
+    const savedBind =
+      localStorage.getItem("redirect_keybind") || DEFAULT_KEYBIND;
+    const targetBind = parseKeybind(
+      customEnabled ? savedBind : DEFAULT_KEYBIND
+    );
+    const targetURL = localStorage.getItem("redirect_url") || "";
+
+    if (pressed === targetBind && targetURL) {
+      window.top.location.href = targetURL;
+    }
+  });
+})();
+
+(function () {
+  const DEFAULT_KEYBIND = "ctrl+shift+r";
+
+  function parseKeybind(str) {
+    return str.toLowerCase().replace(/\s+/g, "").split("+").sort().join("+");
+  }
+
+  function tryRedirect(pressed) {
+    const customEnabled =
+      localStorage.getItem("custom_keybind_enabled") === "true";
+    const savedBind =
+      localStorage.getItem("redirect_keybind") || DEFAULT_KEYBIND;
+    const targetBind = parseKeybind(
+      customEnabled ? savedBind : DEFAULT_KEYBIND
+    );
+    const targetURL = localStorage.getItem("redirect_url") || "";
+
+    if (pressed === targetBind && targetURL) {
+      window.location.href = targetURL;
+    }
+  }
+
+  // Listen for keybind messages from iframe
+  window.addEventListener("message", (event) => {
+    if (
+      event.data &&
+      event.data.type === "keybind-pressed" &&
+      typeof event.data.keybind === "string"
+    ) {
+      tryRedirect(event.data.keybind);
+    }
+  });
+
+  // Also listen on top window directly for keypresses when focused on index.html
+  document.addEventListener("keydown", (e) => {
+    const parts = [];
+    if (e.ctrlKey) parts.push("ctrl");
+    if (e.shiftKey) parts.push("shift");
+    if (e.altKey) parts.push("alt");
+    if (e.metaKey) parts.push("meta");
+
+    const key = e.key.length === 1 ? e.key.toLowerCase() : e.key.toLowerCase();
+    if (!["control", "shift", "alt", "meta"].includes(key)) {
+      parts.push(key);
+    }
+
+    const pressed = parts.sort().join("+");
+    tryRedirect(pressed);
+  });
+})();

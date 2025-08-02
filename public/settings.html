@@ -37,11 +37,40 @@
         height: 24px;
         cursor: pointer;
       }
+      input[type="text"],
+      input[type="url"] {
+        padding: 10px;
+        font-size: 1em;
+        width: 100%;
+        border: none;
+        border-radius: 6px;
+        margin-top: 8px;
+        box-sizing: border-box;
+      }
+      button {
+        background: #fffb00;
+        color: #000;
+        font-weight: bold;
+        border: none;
+        border-radius: 8px;
+        padding: 12px;
+        font-size: 1.1em;
+        cursor: pointer;
+        transition: background 0.2s ease;
+      }
+      button:hover {
+        background: #e6e600;
+      }
       .footer {
         margin-top: auto;
         font-size: 0.8em;
         color: #888;
         text-align: center;
+      }
+      .section {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
       }
     </style>
   </head>
@@ -58,25 +87,125 @@
       Show Bookmarks
     </label>
 
+    <div class="section">
+      <label>
+        <input type="checkbox" id="enableCustomKeybind" />
+        Enable Custom Keybind
+      </label>
+
+      <div>
+        <label for="keybindInput">Keybind</label>
+        <input
+          type="text"
+          id="keybindInput"
+          placeholder="Ctrl+Shift+R"
+          disabled
+        />
+      </div>
+
+      <div>
+        <label for="redirectUrl">Redirect URL</label>
+        <input type="url" id="redirectUrl" placeholder="https://example.com" />
+      </div>
+
+      <button id="saveRedirect">Save Keybind Settings</button>
+      <div id="statusMessage" style="color: #0f0"></div>
+    </div>
+
     <div class="footer">Changes are saved automatically.</div>
 
     <script>
       const iframeToggle = document.getElementById("iframeModeToggle");
       const bookmarksToggle = document.getElementById("showBookmarksToggle");
+      const customKeybindToggle = document.getElementById(
+        "enableCustomKeybind"
+      );
+      const keybindInput = document.getElementById("keybindInput");
+      const redirectUrlInput = document.getElementById("redirectUrl");
+      const saveRedirectBtn = document.getElementById("saveRedirect");
+      const statusMessage = document.getElementById("statusMessage");
 
-      // Load saved settings or default values
+      const DEFAULT_KEYBIND = "ctrl+shift+r";
+
+      // Load toggles
       iframeToggle.checked =
         localStorage.getItem("settings_iframeMode") === "true";
       bookmarksToggle.checked =
         localStorage.getItem("settings_showBookmarks") !== "false";
 
-      // Save on change
       iframeToggle.addEventListener("change", () => {
         localStorage.setItem("settings_iframeMode", iframeToggle.checked);
       });
 
       bookmarksToggle.addEventListener("change", () => {
         localStorage.setItem("settings_showBookmarks", bookmarksToggle.checked);
+      });
+
+      // Load keybind settings
+      const savedCustom =
+        localStorage.getItem("custom_keybind_enabled") === "true";
+      const savedKeybind =
+        localStorage.getItem("redirect_keybind") || DEFAULT_KEYBIND;
+      const savedURL = localStorage.getItem("redirect_url") || "";
+
+      customKeybindToggle.checked = savedCustom;
+      keybindInput.disabled = !savedCustom;
+      keybindInput.value = savedKeybind;
+      redirectUrlInput.value = savedURL;
+
+      customKeybindToggle.addEventListener("change", () => {
+        const enabled = customKeybindToggle.checked;
+        keybindInput.disabled = !enabled;
+      });
+
+      saveRedirectBtn.addEventListener("click", () => {
+        const useCustom = customKeybindToggle.checked;
+        const keybind = useCustom ? keybindInput.value.trim() : DEFAULT_KEYBIND;
+        const url = redirectUrlInput.value.trim();
+
+        localStorage.setItem("custom_keybind_enabled", useCustom);
+        localStorage.setItem("redirect_keybind", keybind);
+        localStorage.setItem("redirect_url", url);
+
+        statusMessage.textContent = "Settings saved!";
+        setTimeout(() => (statusMessage.textContent = ""), 2000);
+      });
+
+      function parseKeybind(str) {
+        return str
+          .toLowerCase()
+          .replace(/\s+/g, "")
+          .split("+")
+          .sort()
+          .join("+");
+      }
+
+      // Global keybind listener inside iframe that sends key info to parent
+      document.addEventListener("keydown", (e) => {
+        const parts = [];
+        if (e.ctrlKey) parts.push("ctrl");
+        if (e.shiftKey) parts.push("shift");
+        if (e.altKey) parts.push("alt");
+        if (e.metaKey) parts.push("meta");
+
+        const key =
+          e.key.length === 1 ? e.key.toLowerCase() : e.key.toLowerCase();
+        if (!["control", "shift", "alt", "meta"].includes(key)) {
+          parts.push(key);
+        }
+
+        const pressed = parts.sort().join("+");
+
+        // Post the pressed keybind string to parent window
+        if (window.parent !== window) {
+          window.parent.postMessage(
+            {
+              type: "keybind-pressed",
+              keybind: pressed,
+            },
+            "*"
+          );
+        }
       });
     </script>
   </body>
