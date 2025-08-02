@@ -71,23 +71,28 @@ function deleteBookmark(idx) {
 }
 
 function go() {
-  var url = document.getElementById("input").value;
-  if (url !== "") {
-    const iframeMode = localStorage.getItem("settings_iframeMode") === "true";
-    if (iframeMode) {
-      // Store the URL in sessionStorage instead of passing it via query parameter
-      sessionStorage.setItem("proxyUrl", url);
-      window.location.href = "/proxy.html";
-    } else {
-      // Store the URL in sessionStorage (optional), and pass URL via query parameter
-      sessionStorage.setItem("gatewayUrl", url);
-      window.location.href = "/service/gateway?url=" + encodeURIComponent(url);
-    }
+  var input = document.getElementById("input").value.trim();
+  const isUrl = validateAndProcessUrl(input);
+  const iframeMode = localStorage.getItem("settings_iframeMode") === "true";
+  let targetUrl;
+
+  if (isUrl) {
+    targetUrl = input.startsWith("http") ? input : "http://" + input;
+  } else {
+    targetUrl = "https://www.qwant.com/?q=" + encodeURIComponent(input);
+  }
+
+  if (iframeMode) {
+    sessionStorage.setItem("proxyUrl", targetUrl);
+    window.location.href = "/proxy.html";
+  } else {
+    sessionStorage.setItem("gatewayUrl", targetUrl);
+    window.location.href =
+      "/service/gateway?url=" + encodeURIComponent(targetUrl);
   }
 }
 
 function validateAndProcessUrl(input) {
-  input = input.trim();
   const patterns = [
     /^https?:\/\/.+/i,
     /^\/\/.+/,
