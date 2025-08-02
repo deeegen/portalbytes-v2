@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Settings</title>
+    <style>
+      body {
+        font-family: "Comic Neue", Arial, sans-serif;
+        background: #1a1a2e;
+        color: #eee;
+        margin: 0;
+        padding: 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+        height: 100vh;
+        box-sizing: border-box;
+      }
+      h1 {
+        font-family: "Orbitron", sans-serif;
+        font-weight: 700;
+        font-size: 2em;
+        margin-bottom: 0.3em;
+        color: #fffb00;
+        text-shadow: 0 0 8px #fffb00;
+      }
+      label {
+        display: flex;
+        align-items: center;
+        font-size: 1.2em;
+        gap: 12px;
+        cursor: pointer;
+      }
+      input[type="checkbox"] {
+        width: 24px;
+        height: 24px;
+        cursor: pointer;
+      }
+      .footer {
+        margin-top: auto;
+        font-size: 0.8em;
+        color: #888;
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Settings</h1>
+
+    <label>
+      <input type="checkbox" id="iframeModeToggle" />
+      Enable Iframe Mask
+    </label>
+
+    <label>
+      <input type="checkbox" id="showBookmarksToggle" />
+      Show Bookmarks
+    </label>
+
+    <div class="footer">Changes are saved automatically.</div>
+
+    <script>
+      const iframeToggle = document.getElementById("iframeModeToggle");
+      const bookmarksToggle = document.getElementById("showBookmarksToggle");
+
+      // Load saved settings or default values
+      iframeToggle.checked =
+        localStorage.getItem("settings_iframeMode") === "true";
+      bookmarksToggle.checked =
+        localStorage.getItem("settings_showBookmarks") !== "false";
+
+      // Save on change
+      iframeToggle.addEventListener("change", () => {
+        localStorage.setItem("settings_iframeMode", iframeToggle.checked);
+      });
+
+      bookmarksToggle.addEventListener("change", () => {
+        localStorage.setItem("settings_showBookmarks", bookmarksToggle.checked);
+      });
+    </script>
+  </body>
+</html>
