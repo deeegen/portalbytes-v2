@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>PortalBytes</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;400&display=swap"
+      rel="stylesheet"
+    />
+    <link href="/assets/proxy.css" rel="stylesheet" />
+  </head>
+  <body>
+    <div class="proxy-container">
+      <div class="proxy-header">
+        <span class="proxy-title">
+          Proxy Portal <span class="proxy-version">v2.1</span>
+        </span>
+        <form
+          id="searchForm"
+          style="display: flex; align-items: center; gap: 8px"
+        >
+          <input
+            type="text"
+            id="urlInput"
+            placeholder="Enter URL"
+            style="
+              padding: 6px 12px;
+              border-radius: 6px;
+              border: none;
+              width: 240px;
+              font-size: 0.9rem;
+            "
+          />
+          <button
+            type="submit"
+            style="
+              padding: 6px 12px;
+              background-color: #2d084f;
+              color: #f7e017;
+              border: none;
+              border-radius: 6px;
+              cursor: pointer;
+              font-weight: bold;
+            "
+          >
+            Go
+          </button>
+        </form>
+        <button id="fullscreenToggle">
+          <i class="bi bi-fullscreen"></i>
+        </button>
+      </div>
+      <div class="proxy-iframe-wrapper">
+        <div class="loading-bg" id="loadingBg">
+          <img src="../assets/star-spinning.gif" alt="Loading..." />
+          <div class="loading-text">Loading...</div>
+        </div>
+        <iframe id="proxyIframe" allowfullscreen></iframe>
+      </div>
+    </div>
+
+    <script>
+      const iframe = document.getElementById("proxyIframe");
+      const loadingBg = document.getElementById("loadingBg");
+
+      function goToUrl(newUrl) {
+        if (!newUrl) return;
+
+        // Auto-prefix with https:// if missing
+        if (!/^https?:\/\//i.test(newUrl)) {
+          newUrl = "https://" + newUrl;
+        }
+
+        const encoded = encodeURIComponent(newUrl);
+        // Removed: iframe.style.opacity = 0;
+        loadingBg.style.display = "flex";
+        iframe.src = "/service/gateway?url=" + encoded;
+        sessionStorage.setItem("proxyUrl", newUrl);
+        iframe.onload = function () {
+          loadingBg.style.display = "none";
+          // Removed: iframe.style.opacity = 1;
+        };
+      }
+
+      const savedUrl =
+        sessionStorage.getItem("proxyUrl") ||
+        sessionStorage.getItem("gatewayUrl");
+
+      if (savedUrl) {
+        goToUrl(savedUrl);
+      } else {
+        loadingBg.querySelector(".loading-text").textContent =
+          "No URL provided.";
+      }
+
+      document.getElementById("searchForm").addEventListener("submit", (e) => {
+        e.preventDefault();
+        const inputUrl = document.getElementById("urlInput").value.trim();
+        if (inputUrl) goToUrl(inputUrl);
+      });
+
+      const fullscreenBtn = document.getElementById("fullscreenToggle");
+      const container = document.querySelector(".proxy-container");
+
+      fullscreenBtn.addEventListener("click", () => {
+        const isFullscreen = container.classList.toggle("fullscreen-iframe");
+        document.body.classList.toggle("fullscreen-mode", isFullscreen);
+        const icon = fullscreenBtn.querySelector("i");
+        if (isFullscreen) {
+          icon.classList.remove("bi-fullscreen");
+          icon.classList.add("bi-fullscreen-exit");
+        } else {
+          icon.classList.remove("bi-fullscreen-exit");
+          icon.classList.add("bi-fullscreen");
+        }
+
+        const header = document.querySelector(".proxy-header");
+        header.style.display = isFullscreen ? "none" : "flex";
+      });
+
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+          const isFullscreen =
+            container.classList.contains("fullscreen-iframe");
+          if (isFullscreen) {
+            container.classList.remove("fullscreen-iframe");
+            document.body.classList.remove("fullscreen-mode");
+            const header = document.querySelector(".proxy-header");
+            header.style.display = "flex";
+
+            const icon = fullscreenBtn.querySelector("i");
+            icon.classList.remove("bi-fullscreen-exit");
+            icon.classList.add("bi-fullscreen");
+          }
+        }
+      });
+
+      history.replaceState({}, "", location.origin + "/");
+    </script>
+  </body>
+</html>
