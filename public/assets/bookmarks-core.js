@@ -1,6 +1,6 @@
 // --- Bookmarks Core Logic ---
 const LOCAL_KEY = "portalBytesBookmarksV1";
-const EXAMPLES = [{ url: "https://duckduckgo.com", title: "" }];
+const EXAMPLES = [{ url: "https://github.com/deeegen", title: "" }];
 
 function normalizeInputUrl(rawInput) {
   let normalizedUrl;
@@ -22,8 +22,7 @@ function normalizeInputUrl(rawInput) {
 }
 
 function fetchBookmarkTitle(url) {
-  // REPLACE WITH YOUR OWN LAZY
-  const apiKey = "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX";
+  const apiKey = "xxxxxxxxx";
   return fetch(
     "https://api.linkpreview.net/?key=" +
       encodeURIComponent(apiKey) +
@@ -58,7 +57,14 @@ function goToUrlProxy(rawInput) {
     alert("Invalid URL.");
     return;
   }
-  const encodedFullUrl = btoa(url);
-  const proxyUrl = `/web/_${encodedFullUrl}_/`;
-  window.location.href = proxyUrl;
+
+  const iframeMode = localStorage.getItem("settings_iframeMode") === "true";
+
+  if (iframeMode) {
+    sessionStorage.setItem("proxyUrl", url);
+    window.location.href = "/proxy.html";
+  } else {
+    sessionStorage.setItem("gatewayUrl", url);
+    window.location.href = "/service/gateway";
+  }
 }
