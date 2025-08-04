@@ -1,0 +1,55 @@
+.icon-btn {
+  background: linear-gradient(135deg, #fffb00 40%, #ff00ea 100%);
+  border: 2px solid #fff;
+  border-radius: 50%;
+  width: 48px;
+  height: 48px;
+  margin-left: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 12px 3px #fffb00, 0 0 6px #ff00ea;
+  cursor: pointer;
+  transition: transform 0.15s;
+}
+.icon-btn:hover {
+  transform: scale(1.1) rotate(-7deg);
+  box-shadow: 0 0 30px 8px #fffb00cc, 0 0 16px #ff00ea;
+}
+.icon-btn i {
+  font-size: 1.6em;
+  color: #7c3aed;
+  text-shadow: 0 0 8px #fff, 0 0 14px #fffb00;
+}
+
+.bookmark-btn {
+  margin-left: 10px;
+  background: linear-gradient(135deg, #ff00ea 40%, #fffb00 100%);
+  box-shadow: 0 0 12px 3px #ff00ea, 0 0 6px #fffb00;
+  transition: background 0.13s, box-shadow 0.13s, transform 0.18s;
+}
+.bookmark-btn:hover {
+  transform: scale(1.13) rotate(8deg);
+  background: linear-gradient(135deg, #fffb00 32%, #ff00ea 100%);
+  box-shadow: 0 0 30px 8px #ff00ead0, 0 0 16px #fffb00;
+}
+.bookmark-btn i {
+  color: #ff00ea;
+  text-shadow: 0 0 10px #fffb00, 0 0 18px #fff;
+}
+
+.settings-btn {
+  margin-left: 10px;
+  background: linear-gradient(135deg, #00d2ff 40%, #3a47d5 100%);
+  box-shadow: 0 0 12px 3px #00d2ff, 0 0 6px #3a47d5;
+  transition: background 0.15s, box-shadow 0.15s, transform 0.18s;
+}
+.settings-btn:hover {
+  transform: scale(1.13) rotate(8deg);
+  background: linear-gradient(135deg, #3a47d5 32%, #00d2ff 100%);
+  box-shadow: 0 0 30px 8px #3a47d5cc, 0 0 16px #00d2ff;
+}
+.settings-btn i {
+  color: #00d2ff;
+  text-shadow: 0 0 10px #3a47d5, 0 0 18px #fff;
+}
