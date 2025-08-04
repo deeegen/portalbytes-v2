@@ -70,24 +70,64 @@ function deleteBookmark(idx) {
   renderBookmarks();
 }
 
+// === Recent Search Helpers ===
+const RECENT_KEY = "pb_recent_searches";
+const MAX_RECENT = 10;
+
+function loadRecentSearches() {
+  const raw = localStorage.getItem(RECENT_KEY);
+  if (!raw) return [];
+  try {
+    const arr = JSON.parse(raw);
+    return Array.isArray(arr) ? arr : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveRecentSearches(arr) {
+  localStorage.setItem(RECENT_KEY, JSON.stringify(arr));
+}
+
+function addRecentSearch(val) {
+  if (!val || typeof val !== "string" || !val.trim()) return;
+  let recent = loadRecentSearches();
+  recent = recent.filter((v) => v !== val);
+  recent.unshift(val);
+  if (recent.length > MAX_RECENT) recent = recent.slice(0, MAX_RECENT);
+  saveRecentSearches(recent);
+}
+
 function go() {
-  var url = document.getElementById("input").value;
-  if (url !== "") {
-    const iframeMode = localStorage.getItem("settings_iframeMode") === "true";
-    if (iframeMode) {
-      // Store the URL in sessionStorage instead of passing it via query parameter
-      sessionStorage.setItem("proxyUrl", url);
-      window.location.href = "/proxy.html";
-    } else {
-      // Store the URL in sessionStorage (optional), and pass URL via query parameter
-      sessionStorage.setItem("gatewayUrl", url);
-      window.location.href = "/service/gateway?url=" + encodeURIComponent(url);
-    }
+  var inputEl = document.getElementById("input");
+  var input = inputEl.value.trim();
+
+  if (!input) return;
+
+  // Add to recent
+  addRecentSearch(input);
+
+  const isUrl = validateAndProcessUrl(input);
+  const iframeMode = localStorage.getItem("settings_iframeMode") === "true";
+  let targetUrl;
+
+  if (isUrl) {
+    targetUrl = input.startsWith("http") ? input : "http://" + input;
+  } else {
+    targetUrl = "https://www.qwant.com/?q=" + encodeURIComponent(input);
+  }
+
+  if (iframeMode) {
+    sessionStorage.setItem("proxyUrl", targetUrl);
+    window.location.href = "/proxy.html";
+  } else {
+    sessionStorage.setItem("gatewayUrl", targetUrl);
+    window.location.href =
+      "/service/gateway?url=" + encodeURIComponent(targetUrl);
   }
 }
 
 function validateAndProcessUrl(input) {
-  input = input.trim();
   const patterns = [
     /^https?:\/\/.+/i,
     /^\/\/.+/,
@@ -114,23 +154,160 @@ document.addEventListener("DOMContentLoaded", async () => {
   renderBookmarks();
 
   const inputField = document.getElementById("input");
-  if (inputField) {
+  const popup = document.getElementById("recent-searches-popup");
+
+  if (inputField && popup) {
     inputField.addEventListener("keydown", (event) => {
       if (event.key === "Enter") {
         event.preventDefault();
         go();
+      } else if (event.key === "Escape") {
+        popup.style.display = "none";
       }
     });
 
-    inputField.addEventListener("input", (event) => {
-      const value = event.target.value.trim();
-      if (value && !validateAndProcessUrl(value) && value.length > 3) {
-        inputField.style.borderColor = "#ff6b6b";
-      } else {
-        inputField.style.borderColor = "#fffb00";
+    inputField.addEventListener("focus", () => {
+      const list = loadRecentSearches();
+      if (list.length === 0) {
+        popup.style.display = "none";
+        return;
+      }
+
+      popup.innerHTML = "";
+      for (const item of list) {
+        const div = document.createElement("div");
+        div.textContent = item;
+        div.tabIndex = 0;
+        div.addEventListener("mousedown", (e) => {
+          e.preventDefault();
+          inputField.value = item;
+          popup.style.display = "none";
+          inputField.focus();
+        });
+        popup.appendChild(div);
+      }
+
+      const rect = inputField.getBoundingClientRect();
+      popup.style.width = rect.width + "px";
+      popup.style.display = "block";
+    });
+
+    inputField.addEventListener("input", () => {
+      const value = inputField.value.trim().toLowerCase();
+      const children = Array.from(popup.children);
+      children.forEach((child) => {
+        child.style.display = child.textContent.toLowerCase().includes(value)
+          ? "block"
+          : "none";
+      });
+      const anyVisible = children.some((el) => el.style.display !== "none");
+      popup.style.display = anyVisible ? "block" : "none";
+    });
+
+    document.addEventListener("mousedown", (e) => {
+      if (e.target !== inputField && !popup.contains(e.target)) {
+        popup.style.display = "none";
       }
     });
+
+    window.addEventListener("resize", () => {
+      const rect = inputField.getBoundingClientRect();
+      popup.style.width = rect.width + "px";
+    });
   } else {
-    console.warn("Input field not found.");
+    console.warn("Input field or popup not found.");
   }
 });
+
+// ===== Keybind Redirect Logic - Runs only on top-level index.html =====
+(function () {
+  const DEFAULT_KEYBIND = "ctrl+shift+r";
+
+  function parseKeybind(str) {
+    return str.toLowerCase().replace(/\s+/g, "").split("+").sort().join("+");
+  }
+
+  document.addEventListener("keydown", (e) => {
+    if (
+      !window.top.location.pathname.endsWith("index.html") &&
+      window.top.location.pathname !== "/"
+    ) {
+      return;
+    }
+
+    const parts = [];
+    if (e.ctrlKey) parts.push("ctrl");
+    if (e.shiftKey) parts.push("shift");
+    if (e.altKey) parts.push("alt");
+    if (e.metaKey) parts.push("meta");
+
+    const key = e.key.length === 1 ? e.key.toLowerCase() : e.key.toLowerCase();
+    if (!["control", "shift", "alt", "meta"].includes(key)) {
+      parts.push(key);
+    }
+
+    const pressed = parts.sort().join("+");
+
+    const customEnabled =
+      localStorage.getItem("custom_keybind_enabled") === "true";
+    const savedBind =
+      localStorage.getItem("redirect_keybind") || DEFAULT_KEYBIND;
+    const targetBind = parseKeybind(
+      customEnabled ? savedBind : DEFAULT_KEYBIND
+    );
+    const targetURL = localStorage.getItem("redirect_url") || "";
+
+    if (pressed === targetBind && targetURL) {
+      window.top.location.href = targetURL;
+    }
+  });
+})();
+
+(function () {
+  const DEFAULT_KEYBIND = "ctrl+shift+r";
+
+  function parseKeybind(str) {
+    return str.toLowerCase().replace(/\s+/g, "").split("+").sort().join("+");
+  }
+
+  function tryRedirect(pressed) {
+    const customEnabled =
+      localStorage.getItem("custom_keybind_enabled") === "true";
+    const savedBind =
+      localStorage.getItem("redirect_keybind") || DEFAULT_KEYBIND;
+    const targetBind = parseKeybind(
+      customEnabled ? savedBind : DEFAULT_KEYBIND
+    );
+    const targetURL = localStorage.getItem("redirect_url") || "";
+
+    if (pressed === targetBind && targetURL) {
+      window.location.href = targetURL;
+    }
+  }
+
+  window.addEventListener("message", (event) => {
+    if (
+      event.data &&
+      event.data.type === "keybind-pressed" &&
+      typeof event.data.keybind === "string"
+    ) {
+      tryRedirect(event.data.keybind);
+    }
+  });
+
+  document.addEventListener("keydown", (e) => {
+    const parts = [];
+    if (e.ctrlKey) parts.push("ctrl");
+    if (e.shiftKey) parts.push("shift");
+    if (e.altKey) parts.push("alt");
+    if (e.metaKey) parts.push("meta");
+
+    const key = e.key.length === 1 ? e.key.toLowerCase() : e.key.toLowerCase();
+    if (!["control", "shift", "alt", "meta"].includes(key)) {
+      parts.push(key);
+    }
+
+    const pressed = parts.sort().join("+");
+    tryRedirect(pressed);
+  });
+})();
