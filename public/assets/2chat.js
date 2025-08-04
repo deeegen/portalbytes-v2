@@ -2,11 +2,27 @@ const socket = io();
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
+// Set canvas size for larger map
+canvas.width = 600;
+canvas.height = 600;
 ctx.imageSmoothingEnabled = true;
 
 const players = {};
 const avatars = {};
 let joined = false;
+
+// Load map image with state handling
+const mapImage = new Image();
+let mapReady = false;
+
+mapImage.onload = () => {
+  mapReady = true;
+};
+mapImage.onerror = () => {
+  showError("Map Image Load Failed", "Could not load /assets/media/map.png");
+};
+
+mapImage.src = "/assets/media/map.png"; // Ensure this path is valid
 
 const usernamePrompt = document.getElementById("usernamePrompt");
 const usernameInput = document.getElementById("usernameInput");
@@ -21,15 +37,12 @@ function showError(context, err) {
 usernameSubmit.addEventListener("click", async () => {
   const username = usernameInput.value.trim() || "Anonymous";
 
-  // Username validation
   if (/[^a-zA-Z0-9_ -]/.test(username)) {
     alert("Username contains invalid characters.");
     return;
   }
 
   const avatarFile = avatarInput.files[0];
-
-  // File size limit
   if (avatarFile && avatarFile.size > 1024 * 1024) {
     alert("Avatar must be under 1MB.");
     return;
@@ -141,7 +154,7 @@ socket.on("chat", ({ id, msg }) => {
       players[id].chat = msg;
       setTimeout(() => {
         if (players[id]) players[id].chat = "";
-      }, 4000); // Clear after 4 seconds
+      }, 4000);
     } catch (err) {
       showError("Error updating chat message", err);
     }
@@ -149,15 +162,27 @@ socket.on("chat", ({ id, msg }) => {
 });
 
 document.addEventListener("keydown", (e) => {
-  if (!joined) return;
-  const movement = { x: 0, y: 0 };
-  if (e.key === "ArrowUp") movement.y = -5;
-  if (e.key === "ArrowDown") movement.y = 5;
-  if (e.key === "ArrowLeft") movement.x = -5;
-  if (e.key === "ArrowRight") movement.x = 5;
-  if (movement.x || movement.y) {
+  if (!joined || !players[socket.id]) return;
+
+  const speed = 5;
+  const p = players[socket.id];
+  let dx = 0,
+    dy = 0;
+
+  if (e.key === "ArrowUp") dy = -speed;
+  if (e.key === "ArrowDown") dy = speed;
+  if (e.key === "ArrowLeft") dx = -speed;
+  if (e.key === "ArrowRight") dx = speed;
+
+  const newX = p.x + dx;
+  const newY = p.y + dy;
+
+  if (newX < 0 || newX > canvas.width - 64) dx = 0;
+  if (newY < 0 || newY > canvas.height - 64) dy = 0;
+
+  if (dx || dy) {
     try {
-      socket.emit("move", movement);
+      socket.emit("move", { x: dx, y: dy });
     } catch (err) {
       showError("Movement emit failed", err);
     }
@@ -174,7 +199,7 @@ socket.on("move", ({ id, data }) => {
     player.x += data.x;
     player.y += data.y;
 
-    // Constrain to canvas boundaries
+    // Clamp to map bounds
     player.x = Math.max(0, Math.min(canvas.width - 64, player.x));
     player.y = Math.max(0, Math.min(canvas.height - 64, player.y));
   } catch (err) {
@@ -185,8 +210,14 @@ socket.on("move", ({ id, data }) => {
 function draw() {
   try {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    if (mapReady) {
+      ctx.drawImage(mapImage, 0, 0, canvas.width, canvas.height);
+    }
+
     for (const id in players) {
       const p = players[id];
+
       if (avatars[id]) {
         ctx.drawImage(avatars[id], p.x, p.y, 64, 64);
       } else {
@@ -194,7 +225,7 @@ function draw() {
         ctx.fillRect(p.x, p.y, 20, 20);
       }
 
-      // Draw username
+      // Username
       if (p.username) {
         ctx.fillStyle = "black";
         ctx.font = "14px sans-serif";
@@ -202,7 +233,7 @@ function draw() {
         ctx.fillText(p.username, p.x + 32, p.y - 10);
       }
 
-      // Draw chat bubble
+      // Chat bubble
       if (p.chat) {
         const padding = 4;
         const textWidth = ctx.measureText(p.chat).width;
@@ -211,7 +242,7 @@ function draw() {
         const bx = p.x + 32 - bubbleWidth / 2;
         const by = p.y - bubbleHeight - 25;
 
-        ctx.fillStyle = id === socket.id ? "#cceeff" : "#ffffff"; // Blue for self
+        ctx.fillStyle = id === socket.id ? "#cceeff" : "#ffffff";
         ctx.fillRect(bx, by, bubbleWidth, bubbleHeight);
         ctx.strokeStyle = "#000000";
         ctx.strokeRect(bx, by, bubbleWidth, bubbleHeight);
@@ -222,6 +253,7 @@ function draw() {
   } catch (err) {
     showError("Drawing error", err);
   }
+
   requestAnimationFrame(draw);
 }
 draw();

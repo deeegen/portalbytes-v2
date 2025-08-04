@@ -70,8 +70,43 @@ function deleteBookmark(idx) {
   renderBookmarks();
 }
 
+// === Recent Search Helpers ===
+const RECENT_KEY = "pb_recent_searches";
+const MAX_RECENT = 10;
+
+function loadRecentSearches() {
+  const raw = localStorage.getItem(RECENT_KEY);
+  if (!raw) return [];
+  try {
+    const arr = JSON.parse(raw);
+    return Array.isArray(arr) ? arr : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveRecentSearches(arr) {
+  localStorage.setItem(RECENT_KEY, JSON.stringify(arr));
+}
+
+function addRecentSearch(val) {
+  if (!val || typeof val !== "string" || !val.trim()) return;
+  let recent = loadRecentSearches();
+  recent = recent.filter((v) => v !== val);
+  recent.unshift(val);
+  if (recent.length > MAX_RECENT) recent = recent.slice(0, MAX_RECENT);
+  saveRecentSearches(recent);
+}
+
 function go() {
-  var input = document.getElementById("input").value.trim();
+  var inputEl = document.getElementById("input");
+  var input = inputEl.value.trim();
+
+  if (!input) return;
+
+  // Add to recent
+  addRecentSearch(input);
+
   const isUrl = validateAndProcessUrl(input);
   const iframeMode = localStorage.getItem("settings_iframeMode") === "true";
   let targetUrl;
@@ -119,24 +154,68 @@ document.addEventListener("DOMContentLoaded", async () => {
   renderBookmarks();
 
   const inputField = document.getElementById("input");
-  if (inputField) {
+  const popup = document.getElementById("recent-searches-popup");
+
+  if (inputField && popup) {
     inputField.addEventListener("keydown", (event) => {
       if (event.key === "Enter") {
         event.preventDefault();
         go();
+      } else if (event.key === "Escape") {
+        popup.style.display = "none";
       }
     });
 
-    inputField.addEventListener("input", (event) => {
-      const value = event.target.value.trim();
-      if (value && !validateAndProcessUrl(value) && value.length > 3) {
-        inputField.style.borderColor = "#ff6b6b";
-      } else {
-        inputField.style.borderColor = "#fffb00";
+    inputField.addEventListener("focus", () => {
+      const list = loadRecentSearches();
+      if (list.length === 0) {
+        popup.style.display = "none";
+        return;
+      }
+
+      popup.innerHTML = "";
+      for (const item of list) {
+        const div = document.createElement("div");
+        div.textContent = item;
+        div.tabIndex = 0;
+        div.addEventListener("mousedown", (e) => {
+          e.preventDefault();
+          inputField.value = item;
+          popup.style.display = "none";
+          inputField.focus();
+        });
+        popup.appendChild(div);
+      }
+
+      const rect = inputField.getBoundingClientRect();
+      popup.style.width = rect.width + "px";
+      popup.style.display = "block";
+    });
+
+    inputField.addEventListener("input", () => {
+      const value = inputField.value.trim().toLowerCase();
+      const children = Array.from(popup.children);
+      children.forEach((child) => {
+        child.style.display = child.textContent.toLowerCase().includes(value)
+          ? "block"
+          : "none";
+      });
+      const anyVisible = children.some((el) => el.style.display !== "none");
+      popup.style.display = anyVisible ? "block" : "none";
+    });
+
+    document.addEventListener("mousedown", (e) => {
+      if (e.target !== inputField && !popup.contains(e.target)) {
+        popup.style.display = "none";
       }
     });
+
+    window.addEventListener("resize", () => {
+      const rect = inputField.getBoundingClientRect();
+      popup.style.width = rect.width + "px";
+    });
   } else {
-    console.warn("Input field not found.");
+    console.warn("Input field or popup not found.");
   }
 });
 
@@ -149,7 +228,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   document.addEventListener("keydown", (e) => {
-    // Only run if top-level page is index.html
     if (
       !window.top.location.pathname.endsWith("index.html") &&
       window.top.location.pathname !== "/"
@@ -207,7 +285,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 
-  // Listen for keybind messages from iframe
   window.addEventListener("message", (event) => {
     if (
       event.data &&
@@ -218,7 +295,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 
-  // Also listen on top window directly for keypresses when focused on index.html
   document.addEventListener("keydown", (e) => {
     const parts = [];
     if (e.ctrlKey) parts.push("ctrl");
