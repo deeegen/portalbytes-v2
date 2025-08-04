@@ -13,10 +13,10 @@ body {
   color: #fff;
 }
 
-@import url("/css/blobs.css");
-@import url("/css/layout.css");
-@import url("/css/buttons.css");
-@import url("/css/modals.css");
-@import url("/css/search.css");
-@import url("/css/navigation.css");
-@import url("/css/bookmarks.css");
+@import url("./css/blobs.css");
+@import url("./css/layout.css");
+@import url("./css/buttons.css");
+@import url("./css/modals.css");
+@import url("./css/search.css");
+@import url("./css/navigation.css");
+@import url("./css/bookmarks.css");
