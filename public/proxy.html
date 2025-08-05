@@ -123,6 +123,22 @@
     </div>
 
     <script>
+      let currentProxyMode = "corrosion"; // default fallback
+
+      async function fetchProxyMode() {
+        try {
+          const res = await fetch("/api/proxy-mode");
+          if (res.ok) {
+            const data = await res.json();
+            if (data.mode) {
+              currentProxyMode = data.mode;
+            }
+          }
+        } catch (e) {
+          console.warn("Failed to fetch proxy mode", e);
+        }
+      }
+
       const iframe = document.getElementById("proxyIframe");
       const loadingBg = document.getElementById("loadingBg");
       const urlInput = document.getElementById("urlInput");
@@ -138,28 +154,54 @@
         return patterns.some((pattern) => pattern.test(input));
       }
 
-      function goToUrl(rawUrl) {
+      async function goToUrl(rawUrl) {
         if (!rawUrl) return;
 
-        const cleaned = rawUrl.trim();
-        const isUrl = validateAndProcessUrl(cleaned);
+        let inputValue = rawUrl.trim();
 
-        let targetUrl = isUrl
-          ? /^https?:\/\//i.test(cleaned)
-            ? cleaned
-            : "https://" + cleaned
-          : "https://www.qwant.com/?q=" + encodeURIComponent(cleaned);
+        // Proxy mode logic integration
+        if (currentProxyMode === "alloy") {
+          // For alloy mode: encode input URL and redirect
+          if (
+            !inputValue.startsWith("http://") &&
+            !inputValue.startsWith("https://")
+          ) {
+            inputValue = "http://" + inputValue;
+          }
+          const encodedValue = btoa(inputValue);
+          window.location.href = "/web/_" + encodedValue + "_/";
+          return;
+        }
 
-        const encoded = encodeURIComponent(targetUrl);
+        // corrosion mode logic
+        const isUrl = validateAndProcessUrl(inputValue);
+        const iframeMode =
+          localStorage.getItem("settings_iframeMode") === "true";
+        let targetUrl;
+
+        if (isUrl) {
+          targetUrl = inputValue.startsWith("http")
+            ? inputValue
+            : "http://" + inputValue;
+        } else {
+          targetUrl =
+            "https://www.qwant.com/?q=" + encodeURIComponent(inputValue);
+        }
 
         loadingBg.style.display = "flex";
 
-        try {
-          iframe.src = "/service/gateway?url=" + encoded;
+        if (iframeMode) {
           sessionStorage.setItem("proxyUrl", targetUrl);
-        } catch (err) {
-          loadingBg.style.display = "none";
-          console.error("Failed to set iframe source:", err);
+          window.location.href = "/proxy.html";
+        } else {
+          try {
+            iframe.src =
+              "/service/gateway?url=" + encodeURIComponent(targetUrl);
+            sessionStorage.setItem("gatewayUrl", targetUrl);
+          } catch (err) {
+            loadingBg.style.display = "none";
+            console.error("Failed to set iframe source:", err);
+          }
         }
       }
 
@@ -197,23 +239,29 @@
         }
       });
 
-      document.getElementById("searchForm").addEventListener("submit", (e) => {
-        e.preventDefault();
-        if (!urlInput) return;
-        const inputUrl = urlInput.value.trim();
-        if (inputUrl) goToUrl(inputUrl);
-      });
+      document
+        .getElementById("searchForm")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+          if (!urlInput) return;
+          const inputUrl = urlInput.value.trim();
+          if (inputUrl) await goToUrl(inputUrl);
+        });
 
-      const savedUrl =
-        sessionStorage.getItem("proxyUrl") ||
-        sessionStorage.getItem("gatewayUrl");
+      async function init() {
+        await fetchProxyMode();
 
-      if (savedUrl && typeof savedUrl === "string") {
-        goToUrl(savedUrl);
-      } else {
-        loadingBg.style.display = "flex";
-        const loadingText = loadingBg.querySelector(".loading-text");
-        if (loadingText) loadingText.textContent = "No URL provided.";
+        const savedUrl =
+          sessionStorage.getItem("proxyUrl") ||
+          sessionStorage.getItem("gatewayUrl");
+
+        if (savedUrl && typeof savedUrl === "string") {
+          await goToUrl(savedUrl);
+        } else {
+          loadingBg.style.display = "flex";
+          const loadingText = loadingBg.querySelector(".loading-text");
+          if (loadingText) loadingText.textContent = "No URL provided.";
+        }
       }
 
       // Allow users to double-click the loading overlay to dismiss it
@@ -268,6 +316,9 @@
       } catch (e) {
         console.warn("Failed to update browser history:", e);
       }
+
+      // Initialize after DOM loaded
+      window.addEventListener("DOMContentLoaded", init);
     </script>
   </body>
 </html>

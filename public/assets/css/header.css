@@ -1,0 +1,82 @@
+/* Curved header styling */
+header.curved-header {
+  position: relative;
+  background: linear-gradient(135deg, #6a11cb, #2575fc);
+  color: white;
+  font-family: "Orbitron", sans-serif;
+  padding: 20px 40px 60px;
+  text-align: center;
+  overflow: visible;
+  clip-path: ellipse(100% 75% at 50% 0%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 30px;
+  transition: background 0.6s ease, clip-path 0.6s ease;
+}
+/* Logo with smooth tweening transform */
+header.curved-header .logo {
+  height: 40px;
+  width: 40px;
+  object-fit: contain;
+  opacity: 0.65;
+  transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.3s ease;
+  cursor: pointer;
+}
+header.curved-header:hover .logo {
+  transform: scale(1.15) translateY(-4px);
+  opacity: 1;
+}
+/* Buttons container */
+header.curved-header .btn-group {
+  display: flex;
+  gap: 30px;
+  flex-grow: 1;
+  justify-content: center;
+  margin-left: 50px;
+}
+/* Button styling */
+header.curved-header button {
+  background: rgba(255 255 255 / 0.2);
+  border: 2.5px solid rgba(255 255 255 / 0.5);
+  border-radius: 28px;
+  color: white;
+  padding: 14px 38px;
+  font-family: "Comic Neue", cursive;
+  font-weight: 900;
+  font-size: 1.28rem;
+  cursor: pointer;
+  box-shadow: inset 0 0 8px rgba(255 255 255 / 0.3),
+    0 4px 10px rgba(0 0 0 / 0.15);
+  transition: background-color 0.4s ease, color 0.4s ease,
+    border-color 0.4s ease, box-shadow 0.4s ease,
+    transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+  user-select: none;
+  backdrop-filter: saturate(180%) blur(8px);
+}
+header.curved-header button:hover {
+  background: white;
+  border-color: white;
+  color: #2575fc;
+  box-shadow: 0 8px 20px rgba(37 117 252 / 0.7),
+    inset 0 0 14px rgba(37 117 252 / 0.5);
+  transform: scale(1.14);
+}
+/* Title minimized and less dominant */
+header.curved-header h1 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 400;
+  opacity: 0.45;
+  user-select: none;
+  flex-shrink: 0;
+  transition: opacity 0.3s ease;
+}
+header.curved-header:hover h1 {
+  opacity: 0.6;
+}
+/* Interactive effect on header */
+header.curved-header:hover {
+  background: linear-gradient(135deg, #2575fc, #6a11cb);
+  clip-path: ellipse(115% 85% at 50% 0%);
+}

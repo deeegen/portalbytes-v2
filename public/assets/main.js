@@ -1,3 +1,17 @@
+let currentProxyMode = "corrosion"; // default fallback
+
+async function fetchProxyMode() {
+  try {
+    const res = await fetch("/api/proxy-mode");
+    if (res.ok) {
+      const data = await res.json();
+      currentProxyMode = data.mode;
+    }
+  } catch (e) {
+    console.warn("Failed to fetch proxy mode", e);
+  }
+}
+
 // --- Bookmarks UI + Behavior Logic ---
 function renderBookmarks() {
   const list = document.getElementById("bookmarks-list");
@@ -70,6 +84,14 @@ function deleteBookmark(idx) {
   renderBookmarks();
 }
 
+function updateBookmarkVisibility() {
+  const show = localStorage.getItem("settings_showBookmarks") !== "false";
+  const container = document.querySelector(".bookmark-container");
+  if (container) {
+    container.style.display = show ? "" : "none";
+  }
+}
+
 // === Recent Search Helpers ===
 const RECENT_KEY = "pb_recent_searches";
 const MAX_RECENT = 10;
@@ -98,35 +120,6 @@ function addRecentSearch(val) {
   saveRecentSearches(recent);
 }
 
-function go() {
-  var inputEl = document.getElementById("input");
-  var input = inputEl.value.trim();
-
-  if (!input) return;
-
-  // Add to recent
-  addRecentSearch(input);
-
-  const isUrl = validateAndProcessUrl(input);
-  const iframeMode = localStorage.getItem("settings_iframeMode") === "true";
-  let targetUrl;
-
-  if (isUrl) {
-    targetUrl = input.startsWith("http") ? input : "http://" + input;
-  } else {
-    targetUrl = "https://www.qwant.com/?q=" + encodeURIComponent(input);
-  }
-
-  if (iframeMode) {
-    sessionStorage.setItem("proxyUrl", targetUrl);
-    window.location.href = "/proxy.html";
-  } else {
-    sessionStorage.setItem("gatewayUrl", targetUrl);
-    window.location.href =
-      "/service/gateway?url=" + encodeURIComponent(targetUrl);
-  }
-}
-
 function validateAndProcessUrl(input) {
   const patterns = [
     /^https?:\/\/.+/i,
@@ -138,7 +131,52 @@ function validateAndProcessUrl(input) {
   return patterns.some((pattern) => pattern.test(input));
 }
 
+// Modified go function using currentProxyMode
+function go() {
+  let inputValue = document.querySelector("input").value.trim();
+
+  if (!inputValue) return;
+
+  // Add to recent searches
+  addRecentSearch(inputValue);
+
+  if (currentProxyMode === "alloy") {
+    if (
+      !inputValue.startsWith("http://") &&
+      !inputValue.startsWith("https://")
+    ) {
+      inputValue = "http://" + inputValue;
+    }
+    const encodedValue = btoa(inputValue);
+    window.location.href = "/web/_" + encodedValue + "_/";
+  } else {
+    // corrosion mode logic (keep as before)
+    const isUrl = validateAndProcessUrl(inputValue);
+    const iframeMode = localStorage.getItem("settings_iframeMode") === "true";
+    let targetUrl;
+
+    if (isUrl) {
+      targetUrl = inputValue.startsWith("http")
+        ? inputValue
+        : "http://" + inputValue;
+    } else {
+      targetUrl = "https://www.qwant.com/?q=" + encodeURIComponent(inputValue);
+    }
+
+    if (iframeMode) {
+      sessionStorage.setItem("proxyUrl", targetUrl);
+      window.location.href = "/proxy.html";
+    } else {
+      sessionStorage.setItem("gatewayUrl", targetUrl);
+      window.location.href =
+        "/service/gateway?url=" + encodeURIComponent(targetUrl);
+    }
+  }
+}
+
 document.addEventListener("DOMContentLoaded", async () => {
+  await fetchProxyMode();
+
   let bookmarks = loadBookmarks();
   if (!bookmarks) {
     let newBms = [];
@@ -217,7 +255,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   } else {
     console.warn("Input field or popup not found.");
   }
-});
+})();
 
 // ===== Keybind Redirect Logic - Runs only on top-level index.html =====
 (function () {
