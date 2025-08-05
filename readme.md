@@ -1,6 +1,13 @@
 works with codesandbox and render
 Use portalbytes v2 here! https://portalbytes.onrender.com/
 
+# How to deploy
+1. Fork this repo
+2. Go to the main server file and choose corrosion or alloy
+3. Upload to compatible websites that support nodejs backend stuff
+4. run the commands "npm install" and "npm" start
+5. Done! have fun dummy
+
 ## Current additions
 aug 5 2025
 - serverside config to switch between the corrosion, or alloy proxy backends! (work in progress :3)
