@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Applications</title>
+    <link href="/assets/css/apps.css" rel="stylesheet" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+  </head>
+
+  <body>
+    <h1>Apps</h1>
+
+    <div class="filter-bar">
+      <input
+        type="text"
+        id="searchInput"
+        placeholder="Search applications..."
+        aria-label="Search applications"
+      />
+      <select id="categoryFilter" aria-label="Filter by category">
+        <option value="all">All Categories</option>
+      </select>
+      <label for="iframeToggle" title="Open in iframe">
+        <input type="checkbox" id="iframeToggle" checked />
+        Use iframe
+      </label>
+      <button id="jsonEditBtn" title="Edit JSON Data">
+        <i class="fa-solid fa-code"></i>
+      </button>
+    </div>
+
+    <div
+      class="cards-container"
+      id="cardsContainer"
+      aria-live="polite"
+      aria-relevant="additions removals"
+    ></div>
+
+    <iframe id="appFrame" title="Application Preview"></iframe>
+
+    <!-- JSON Edit Modal -->
+    <div
+      id="jsonModal"
+      class="modal-bg"
+      style="display: none"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="jsonModalTitle"
+    >
+      <div class="modal">
+        <h3 id="jsonModalTitle">Edit Applications JSON</h3>
+        <textarea
+          id="jsonTextarea"
+          aria-label="Applications JSON data"
+        ></textarea>
+        <div class="modal-buttons">
+          <button id="jsonSaveBtn">Save</button>
+          <button id="jsonCancelBtn">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="./assets/js/apps.js"></script>
+  </body>
+</html>
