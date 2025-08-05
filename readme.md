@@ -1,5 +1,5 @@
 works with codesandbox and render
-Use portalbytes v2 here! https://portalbytes-v2-cor.onrender.com/
+Use portalbytes v2 here! https://portalbytes.onrender.com/
 
 ## Current additions
 aug 5 2025
