@@ -120,18 +120,24 @@ renderEditor();
 // Starfield logic
 const canvas = document.getElementById("starfield");
 const ctx = canvas.getContext("2d");
+
 let stars = [];
 const starCount = 300;
 const interactiveFraction = 0.25;
+
 let mouse = { x: null, y: null };
+
 const gravityRadius = 200;
 const orbitRadius = 60;
 const ambientSpeedLimit = 0.05;
 const maxSpeed = 1.5;
+const minStarDistance = 8; // Minimum distance between stars to prevent bundling
+
 function resizeCanvas() {
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
 }
+
 function createStars() {
   stars = [];
   for (let i = 0; i < starCount; i++) {
@@ -153,6 +159,7 @@ function createStars() {
     });
   }
 }
+
 function clampVelocity(vx, vy, max) {
   const speed = Math.sqrt(vx * vx + vy * vy);
   if (speed > max) {
@@ -161,15 +168,56 @@ function clampVelocity(vx, vy, max) {
   }
   return { vx, vy };
 }
+
+// Repel stars from each other if they get too close
+function applyStarRepulsion() {
+  for (let i = 0; i < stars.length; i++) {
+    for (let j = i + 1; j < stars.length; j++) {
+      const starA = stars[i];
+      const starB = stars[j];
+      const dx = starB.x - starA.x;
+      const dy = starB.y - starA.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+
+      if (distance < minStarDistance && distance > 0) {
+        const overlap = (minStarDistance - distance) / 2;
+        const nx = dx / distance;
+        const ny = dy / distance;
+
+        // Push stars apart
+        starA.x -= nx * overlap;
+        starA.y -= ny * overlap;
+        starB.x += nx * overlap;
+        starB.y += ny * overlap;
+
+        // Optional small velocity nudge
+        const repulsionStrength = 0.01;
+        starA.vx -= nx * repulsionStrength;
+        starA.vy -= ny * repulsionStrength;
+        starB.vx += nx * repulsionStrength;
+        starB.vy += ny * repulsionStrength;
+      }
+    }
+  }
+}
+
 function animateStars() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  applyStarRepulsion(); // Prevent stars from overlapping
+
   for (let star of stars) {
     const dx = mouse.x - star.x;
     const dy = mouse.y - star.y;
     const distance = Math.sqrt(dx * dx + dy * dy);
+
     if (star.interactive) {
-      if (mouse.x !== null && distance < orbitRadius) star.orbiting = true;
-      else star.orbiting = false;
+      if (mouse.x !== null && distance < orbitRadius) {
+        star.orbiting = true;
+      } else {
+        star.orbiting = false;
+      }
+
       if (star.orbiting) {
         star.angle += 0.05;
         star.x = mouse.x + Math.cos(star.angle) * orbitRadius;
@@ -187,35 +235,44 @@ function animateStars() {
         star.vy = clamped.vy;
       }
     }
+
     if (!star.orbiting) {
       star.vx *= 0.98;
       star.vy *= 0.98;
       star.x += star.vx;
       star.y += star.vy;
     }
+
     if (star.x < 0 || star.x > canvas.width) star.vx *= -1;
     if (star.y < 0 || star.y > canvas.height) star.vy *= -1;
+
     star.opacity += star.opacitySpeed;
     if (star.opacity >= 1 || star.opacity <= 0) star.opacitySpeed *= -1;
+
     ctx.beginPath();
     ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
     ctx.fillStyle = `rgba(255,255,255,${star.opacity})`;
     ctx.fill();
   }
+
   requestAnimationFrame(animateStars);
 }
+
 window.addEventListener("resize", () => {
   resizeCanvas();
   createStars();
 });
+
 window.addEventListener("mousemove", (e) => {
   mouse.x = e.clientX;
   mouse.y = e.clientY;
 });
+
 window.addEventListener("mouseout", () => {
   mouse.x = null;
   mouse.y = null;
 });
+
 resizeCanvas();
 createStars();
 animateStars();
