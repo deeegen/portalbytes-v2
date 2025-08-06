@@ -125,13 +125,12 @@ let stars = [];
 const starCount = 300;
 const interactiveFraction = 0.25;
 
-let mouse = { x: null, y: null };
-
+let mouse = { x: null, y: null, down: false, lastX: null, lastY: null };
 const gravityRadius = 200;
 const orbitRadius = 60;
 const ambientSpeedLimit = 0.05;
-const maxSpeed = 1.5;
-const minStarDistance = 8; // Minimum distance between stars to prevent bundling
+const maxSpeed = 2;
+const minStarDistance = 8;
 
 function resizeCanvas() {
   canvas.width = window.innerWidth;
@@ -169,7 +168,6 @@ function clampVelocity(vx, vy, max) {
   return { vx, vy };
 }
 
-// Repel stars from each other if they get too close
 function applyStarRepulsion() {
   for (let i = 0; i < stars.length; i++) {
     for (let j = i + 1; j < stars.length; j++) {
@@ -184,13 +182,11 @@ function applyStarRepulsion() {
         const nx = dx / distance;
         const ny = dy / distance;
 
-        // Push stars apart
         starA.x -= nx * overlap;
         starA.y -= ny * overlap;
         starB.x += nx * overlap;
         starB.y += ny * overlap;
 
-        // Optional small velocity nudge
         const repulsionStrength = 0.01;
         starA.vx -= nx * repulsionStrength;
         starA.vy -= ny * repulsionStrength;
@@ -204,7 +200,7 @@ function applyStarRepulsion() {
 function animateStars() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  applyStarRepulsion(); // Prevent stars from overlapping
+  applyStarRepulsion();
 
   for (let star of stars) {
     const dx = mouse.x - star.x;
@@ -212,6 +208,7 @@ function animateStars() {
     const distance = Math.sqrt(dx * dx + dy * dy);
 
     if (star.interactive) {
+      // Orbiting logic
       if (mouse.x !== null && distance < orbitRadius) {
         star.orbiting = true;
       } else {
@@ -225,11 +222,28 @@ function animateStars() {
         star.vx = 0;
         star.vy = 0;
       } else if (mouse.x !== null && distance < gravityRadius) {
-        const force = 1 / (distance * 0.05);
+        // Dynamic gravity
+        const G = 100; // gravitational constant (tweakable)
+        const force = G / (distance * distance + 50); // prevent division by 0
         const ax = (dx / distance) * force;
         const ay = (dy / distance) * force;
+
         star.vx += ax;
         star.vy += ay;
+
+        const clamped = clampVelocity(star.vx, star.vy, maxSpeed);
+        star.vx = clamped.vx;
+        star.vy = clamped.vy;
+      }
+
+      // Throwing logic
+      if (mouse.down && distance < gravityRadius && mouse.lastX !== null) {
+        const dragVX = (mouse.x - mouse.lastX) * 0.1;
+        const dragVY = (mouse.y - mouse.lastY) * 0.1;
+
+        star.vx += dragVX;
+        star.vy += dragVY;
+
         const clamped = clampVelocity(star.vx, star.vy, maxSpeed);
         star.vx = clamped.vx;
         star.vy = clamped.vy;
@@ -243,9 +257,24 @@ function animateStars() {
       star.y += star.vy;
     }
 
-    if (star.x < 0 || star.x > canvas.width) star.vx *= -1;
-    if (star.y < 0 || star.y > canvas.height) star.vy *= -1;
+    // Boundary enforcement (bounce and stay in bounds)
+    if (star.x < 0) {
+      star.x = 0;
+      star.vx *= -1;
+    } else if (star.x > canvas.width) {
+      star.x = canvas.width;
+      star.vx *= -1;
+    }
 
+    if (star.y < 0) {
+      star.y = 0;
+      star.vy *= -1;
+    } else if (star.y > canvas.height) {
+      star.y = canvas.height;
+      star.vy *= -1;
+    }
+
+    // Twinkling
     star.opacity += star.opacitySpeed;
     if (star.opacity >= 1 || star.opacity <= 0) star.opacitySpeed *= -1;
 
@@ -254,6 +283,9 @@ function animateStars() {
     ctx.fillStyle = `rgba(255,255,255,${star.opacity})`;
     ctx.fill();
   }
+
+  mouse.lastX = mouse.x;
+  mouse.lastY = mouse.y;
 
   requestAnimationFrame(animateStars);
 }
@@ -268,9 +300,19 @@ window.addEventListener("mousemove", (e) => {
   mouse.y = e.clientY;
 });
 
+window.addEventListener("mousedown", () => {
+  mouse.down = true;
+});
+window.addEventListener("mouseup", () => {
+  mouse.down = false;
+});
+
 window.addEventListener("mouseout", () => {
   mouse.x = null;
   mouse.y = null;
+  mouse.down = false;
+  mouse.lastX = null;
+  mouse.lastY = null;
 });
 
 resizeCanvas();
