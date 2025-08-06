@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Static Notepad</title>
+    <style>
+      :root {
+        --color-bg: transparent;
+        --color-tab-inactive: #5d3fd3;
+        --color-tab-active: #836fff;
+        --color-accent: #ffd700;
+        --color-text: #e0e0e0;
+        --color-control-bg: rgba(46, 46, 46, 0.8);
+        --line-height: 1.4;
+        --padding: 10px;
+        --font-size: 1rem;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      html,
+      body {
+        height: 100%;
+        overflow: hidden;
+      }
+
+      body {
+        font-family: monospace;
+        display: flex;
+        flex-direction: column;
+        background-color: #000;
+        position: relative;
+        color: var(--color-text);
+      }
+
+      canvas#starfield {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 0;
+      }
+
+      .tabs {
+        display: flex;
+        background: var(--color-control-bg);
+        padding: 0.5rem;
+        z-index: 1;
+      }
+
+      .tab {
+        padding: 0.5rem 1rem;
+        margin-right: 0.5rem;
+        background: var(--color-tab-inactive);
+        color: var(--color-text);
+        border-radius: 4px 4px 0 0;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+        user-select: none;
+        z-index: 1;
+      }
+
+      .tab.active {
+        background: var(--color-tab-active);
+        border-bottom: 2px solid #000;
+      }
+
+      .tab-title {
+        flex: 1;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .tab-title[contenteditable] {
+        background: var(--color-control-bg);
+        border: 1px solid var(--color-accent);
+        padding: 2px;
+        color: var(--color-text);
+      }
+
+      .edit-btn,
+      .close-btn {
+        margin-left: 0.5rem;
+        cursor: pointer;
+        color: var(--color-accent);
+        z-index: 1;
+      }
+
+      #add-tab {
+        padding: 0.5rem;
+        cursor: pointer;
+        background: var(--color-tab-inactive);
+        color: var(--color-text);
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+        user-select: none;
+        z-index: 1;
+      }
+
+      .controls {
+        background: var(--color-control-bg);
+        padding: 0.5rem;
+        text-align: right;
+        box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.5);
+        z-index: 1;
+      }
+
+      .editor {
+        flex: 1;
+        display: flex;
+        height: 0;
+        position: relative;
+        z-index: 1;
+      }
+
+      .line-numbers,
+      textarea {
+        padding: var(--padding);
+        font-family: monospace;
+        font-size: var(--font-size);
+        line-height: var(--line-height);
+        overflow: auto;
+      }
+
+      .line-numbers {
+        width: 3em;
+        background: var(--color-control-bg);
+        text-align: right;
+        white-space: pre;
+        color: var(--color-accent);
+        border-right: 1px solid var(--color-tab-inactive);
+        user-select: none;
+      }
+
+      textarea {
+        flex: 1;
+        border: none;
+        resize: none;
+        outline: none;
+        background: rgba(0, 0, 0, 0);
+        color: var(--color-text);
+        white-space: pre;
+      }
+
+      button {
+        padding: 0.5rem 1rem;
+        cursor: pointer;
+        border: none;
+        border-radius: 4px;
+        background: var(--color-accent);
+        color: #000;
+        font-weight: bold;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+        z-index: 1;
+      }
+
+      /* ========== Enhanced Interactivity Styles ========== */
+
+      /* Smooth transitions for interactive elements */
+      button,
+      .tab,
+      .edit-btn,
+      .close-btn,
+      #add-tab {
+        transition: background 0.3s ease, transform 0.15s ease,
+          box-shadow 0.2s ease;
+      }
+
+      /* Hover styles for better visual feedback */
+      button:hover,
+      #add-tab:hover,
+      .tab:hover {
+        background: var(--color-accent);
+        color: #000;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(255, 215, 0, 0.4);
+      }
+
+      .edit-btn:hover,
+      .close-btn:hover {
+        color: #fff;
+        transform: scale(1.2);
+      }
+
+      /* Active (pressed) styles for tactile feedback */
+      button:active,
+      #add-tab:active,
+      .tab:active {
+        transform: translateY(1px);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+      }
+
+      /* Focus styles for accessibility */
+      button:focus,
+      .tab:focus,
+      #add-tab:focus {
+        outline: 2px solid var(--color-accent);
+        outline-offset: 2px;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="starfield"></canvas>
+    <div class="tabs" id="tabs"></div>
+    <div class="controls"><button id="export-btn">Export</button></div>
+    <div class="editor">
+      <div class="line-numbers" id="line-numbers">1</div>
+      <textarea id="editor" spellcheck="false"></textarea>
+    </div>
+    <script src="./../assets/js/apps/notes.js"></script>
+  </body>
+</html>
