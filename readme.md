@@ -1,23 +1,48 @@
-works with codesandbox and render
-Use portalbytes v2 here! https://portalbytes.onrender.com/
+# Portalbytes V2
 
-# How to deploy
-1. Fork this repo
-2. Go to the main server file and choose corrosion or alloy
-3. Upload to compatible websites that support nodejs backend stuff
-4. run the commands "npm install" and "npm" start
-5. Done! have fun dummy
+## Overview
+Portalbytes V2 is a Node.js proxy application that lets you switch between two backend modes—**corrosion** and **alloy**—on the fly.  
+Live demo: https://portalbytes.onrender.com/
 
-## Current additions
-aug 5 2025
-- serverside config to switch between the corrosion, or alloy proxy backends! (work in progress :3)
-aug 1-4 2025
-- Replace history state for proxy.html
-- 2D **GAME** styled chatroom with custom image
+## Requirements
+- Node.js (v14+ recommended)  
+- Hosting platform with Node.js backend support
 
-## Issues
-- With the implementation of multi proxy backends, the iframe mask page has broken into a loop, will create a substitute until its resolved
+## Deployment
 
-## What I want to do
-- Frontend/client logic to switch proxy type
-- just fun stuff idk
+1. **Fork** this repository.  
+2. **Configure** the backend mode:
+   - Open the main server file (e.g. `server.js`).
+   - Set the `backend` variable to either `corrosion` or `alloy`.  
+3. **Upload** the code to your Node.js–compatible hosting provider.  
+4. **Install** dependencies:
+   ```npm install```
+5. **Start** the server:
+   ```npm start```
+6. **Enjoy!!!**
+
+## Configuration
+The backend selection is managed by a single variable in the server entry point.
+
+Future plans include exposing this toggle through a web-based control panel.
+
+## Changelog
+
+### August 5, 2025
+- Added server-side configuration to switch between `corrosion` and `alloy` backends (work in progress).
+
+### August 1–4, 2025
+- Replaced history state handling in `proxy.html`.
+- Introduced a 2D game-styled chatroom with custom image support.
+
+## Known Issues
+- **Iframe mask looping**: The multi-backend proxy implementation causes the iframe mask page to reload continuously. A temporary fallback will be provided soon.
+
+## Roadmap
+- Frontend/client logic for dynamic proxy backend switching.
+- Additional features and UI enhancements.
+
+## Releases
+- **v2.9.9** ([GitHub release](https://github.com/deeegen/portalbytes-v2/releases/tag/v2.9.9))
+  - Nearing v3 milestone; includes proxy-backend configuration options.
+  - Note: iframe mode is currently broken.
