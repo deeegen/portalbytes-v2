@@ -20,7 +20,7 @@ function initializeProxy(proxyType) {
     return new Corrosion({
       prefix: "/service/",
       codec: "xor",
-      title: "PortalBytes",
+      title: "PBsV3",
       forceHttps: true,
       requestMiddleware: [
         Corrosion.middleware.blacklist(

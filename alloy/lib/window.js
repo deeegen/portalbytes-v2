@@ -472,4 +472,55 @@ Object.defineProperty(document, "cookie", {
   },
 });
 
+// --- BEGIN MODIFICATION TO HARD-CODE <title> ELEMENT ---
+
+// Override document.title property
+Object.defineProperty(document, "title", {
+  get() {
+    return "PBsV3";
+  },
+  set(value) {
+    // silently ignore any attempts to set title to something else, keep it fixed
+    // But update <title> elements in DOM to match anyway (in case some script relies on it)
+    document.querySelectorAll("title").forEach((el) => {
+      el.textContent = "PBsV3";
+    });
+  },
+  configurable: true,
+});
+
+// Ensure all existing <title> elements are fixed on load
+document.querySelectorAll("title").forEach((el) => {
+  el.textContent = "PBsV3";
+});
+
+// Use a MutationObserver to detect added or changed <title> elements and reset them
+const titleObserver = new MutationObserver((mutations) => {
+  for (const mutation of mutations) {
+    if (mutation.type === "childList" && mutation.addedNodes.length > 0) {
+      mutation.addedNodes.forEach((node) => {
+        if (node.nodeType === 1 && node.tagName.toLowerCase() === "title") {
+          node.textContent = "PBsV3";
+        }
+      });
+    } else if (
+      mutation.type === "characterData" &&
+      mutation.target.parentElement.tagName.toLowerCase() === "title"
+    ) {
+      mutation.target.data = "PBsV3";
+    }
+  }
+});
+
+const head = document.querySelector("head");
+if (head) {
+  titleObserver.observe(head, {
+    childList: true,
+    subtree: true,
+    characterData: true,
+  });
+}
+
+// --- END MODIFICATION ---
+
 document.currentScript.remove();

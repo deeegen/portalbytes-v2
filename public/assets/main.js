@@ -145,7 +145,7 @@ function updateBookmarkVisibility() {
 
 // === Recent Search Helpers ===
 const RECENT_KEY = "pb_recent_searches";
-const MAX_RECENT = 10;
+const MAX_RECENT = 7;
 
 function loadRecentSearches() {
   const raw = localStorage.getItem(RECENT_KEY);
