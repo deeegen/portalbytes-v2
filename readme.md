@@ -28,6 +28,9 @@ Future plans include exposing this toggle through a web-based control panel.
 
 ## Changelog
 
+### August 10, 2025
+- Added front end config to switch between backends!
+
 ### August 5, 2025
 - Added server-side configuration to switch between `corrosion` and `alloy` backends (work in progress).
 
