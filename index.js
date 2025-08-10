@@ -16,7 +16,7 @@ let currentProxyType = null;
 
 function initializeProxy(proxyType) {
   if (proxyType === "corrosion") {
-    const Corrosion = require("./lib/server");
+    const Corrosion = require("./cor/server");
     return new Corrosion({
       prefix: "/service/",
       codec: "xor",

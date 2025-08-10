@@ -1,0 +1,453 @@
+:root {
+  /* Light Blue + Purple palette */
+  --bg-900: #1e2433; /* Darker blue-ish purple */
+  --bg-800: #2a2f48;
+  --bg-700: #373e60;
+
+  --text-100: #e0e8f9; /* Light blue-ish text */
+  --text-300: #a3b0d4;
+  --muted-500: #7a86b5;
+
+  --accent: #7ac7ff; /* Light bright blue */
+  --accent-2: #b396f0; /* Medium purple */
+  --accent-3: #b3d9ff; /* Pale light blue */
+
+  --accent-glow: color-mix(in oklab, var(--accent), white 20%);
+  --cyan-glow: color-mix(in oklab, var(--accent-3), white 15%);
+  --lilac-glow: color-mix(in oklab, var(--accent-2), white 20%);
+
+  --card-bg: rgba(40, 45, 75, 0.55);
+  --card-border: 1px solid rgba(186, 179, 230, 0.12);
+
+  --ring: rgba(122, 199, 255, 0.65);
+  --ring-outer: rgba(179, 150, 240, 0.35);
+
+  --success-neon: #a5f0ff;
+
+  --radius-md: 14px;
+  --radius-lg: 18px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+
+  --shadow-soft: 0 10px 30px rgba(20, 30, 50, 0.5);
+  --shadow-glow: 0 0 24px rgba(122, 199, 255, 0.25),
+    0 0 48px rgba(179, 150, 240, 0.18);
+
+  color-scheme: dark;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+::selection {
+  background: rgba(122, 199, 255, 0.28);
+  color: #fff;
+}
+
+/* ————— Background: light blue + purple gradients + stars + aurora ————— */
+body {
+  font-family: "Space Grotesk", "Comic Neue", system-ui, -apple-system, Segoe UI,
+    Arial, sans-serif;
+  background: radial-gradient(
+      1200px 800px at 10% 15%,
+      rgba(122, 199, 255, 0.08),
+      transparent 60%
+    ),
+    radial-gradient(
+      900px 700px at 85% 25%,
+      rgba(179, 150, 240, 0.07),
+      transparent 60%
+    ),
+    radial-gradient(
+      1000px 800px at 40% 80%,
+      rgba(179, 219, 255, 0.05),
+      transparent 65%
+    ),
+    linear-gradient(
+      135deg,
+      var(--bg-900) 0%,
+      var(--bg-800) 50%,
+      var(--bg-900) 100%
+    );
+  color: var(--text-100);
+  margin: 0;
+  padding: var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  min-height: 100dvh;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* Starfield layer */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image: radial-gradient(
+      1px 1px at 20% 30%,
+      rgba(255, 255, 255, 0.75) 50%,
+      transparent 51%
+    ),
+    radial-gradient(
+      1.2px 1.2px at 80% 60%,
+      rgba(255, 255, 255, 0.6) 50%,
+      transparent 51%
+    ),
+    radial-gradient(
+      0.8px 0.8px at 50% 80%,
+      rgba(255, 255, 255, 0.65) 50%,
+      transparent 51%
+    ),
+    radial-gradient(
+      1px 1px at 70% 20%,
+      rgba(255, 255, 255, 0.5) 50%,
+      transparent 51%
+    ),
+    radial-gradient(
+      1px 1px at 30% 70%,
+      rgba(255, 255, 255, 0.55) 50%,
+      transparent 51%
+    );
+  background-size: 160px 160px, 220px 220px, 260px 260px, 300px 300px,
+    340px 340px;
+  background-repeat: repeat;
+  animation: starDrift 160s linear infinite;
+  mix-blend-mode: screen;
+  opacity: 0.65;
+}
+
+/* Aurora veil layer */
+body::after {
+  content: "";
+  position: fixed;
+  inset: -10% -10% -5% -10%;
+  pointer-events: none;
+  z-index: 0;
+  background: conic-gradient(
+    from 210deg at 60% 40%,
+    rgba(122, 199, 255, 0.14),
+    rgba(179, 150, 240, 0.12),
+    rgba(179, 219, 255, 0.12),
+    rgba(122, 199, 255, 0.14)
+  );
+  filter: blur(60px) saturate(110%);
+  opacity: 0.55;
+  animation: auroraSway 28s ease-in-out infinite alternate;
+  transform: translateZ(0);
+}
+
+/* Content stack above overlays */
+h1,
+label,
+input,
+button,
+.footer,
+.section,
+.proxy-options,
+.status-message {
+  position: relative;
+  z-index: 1;
+}
+
+/* ————— Typography ————— */
+h1 {
+  font-family: "Orbitron", sans-serif;
+  font-weight: 700;
+  font-size: clamp(2rem, 3.2vw + 1rem, 3rem);
+  margin: 0 0 0.2em 0;
+  letter-spacing: 0.09em;
+  /* Pearly gradient text with gentle twin glows */
+  color: transparent;
+  background-image: linear-gradient(
+    90deg,
+    #d6e8ff 0%,
+    var(--accent) 45%,
+    var(--accent-2) 90%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  text-shadow: 0 0 12px rgba(122, 199, 255, 0.35),
+    0 0 26px rgba(179, 150, 240, 0.25);
+  animation: titleGlow 6s ease-in-out infinite alternate;
+}
+
+/* ————— Labels & micro-sparkle ————— */
+label {
+  display: flex;
+  align-items: center;
+  font-size: 1.08em;
+  gap: var(--space-3);
+  cursor: pointer;
+  user-select: none;
+  transition: color 0.25s ease, text-shadow 0.35s ease;
+  color: var(--text-300);
+}
+
+label:hover {
+  color: var(--accent);
+  text-shadow: 0 0 8px rgba(122, 199, 255, 0.5);
+}
+
+label::after {
+  content: "";
+  width: 10px;
+  height: 10px;
+  margin-left: 2px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 30% 30%,
+    #fff,
+    rgba(255, 255, 255, 0.1) 35%,
+    transparent 36%
+  );
+  opacity: 0;
+  transform: translateY(-2px) scale(0.6);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  filter: drop-shadow(0 0 6px rgba(122, 199, 255, 0.6));
+}
+
+label:hover::after {
+  opacity: 0.9;
+  transform: translateY(-2px) scale(1);
+}
+
+/* ————— Controls ————— */
+input[type="checkbox"],
+input[type="radio"] {
+  appearance: none;
+  -webkit-appearance: none;
+  display: inline-grid;
+  place-items: center;
+  cursor: pointer;
+  border: 1.5px solid rgba(122, 199, 255, 0.75);
+  background: linear-gradient(
+    180deg,
+    rgba(42, 42, 78, 0.6),
+    rgba(26, 26, 46, 0.6)
+  );
+  backdrop-filter: blur(4px);
+  border-radius: 8px;
+  transition: border-color 0.25s ease, box-shadow 0.3s ease,
+    background-color 0.25s ease, transform 0.08s ease;
+  position: relative;
+  box-sizing: border-box;
+  box-shadow: inset 0 0 10px rgba(20, 20, 40, 0.7),
+    0 0 10px rgba(122, 199, 255, 0.15);
+}
+
+input[type="checkbox"] {
+  width: 28px;
+  height: 28px;
+}
+
+input[type="radio"] {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+}
+
+/* Press feel */
+input[type="checkbox"]:active,
+input[type="radio"]:active {
+  transform: scale(0.97);
+}
+
+/* Checked states */
+input[type="checkbox"]:checked,
+input[type="radio"]:checked {
+  background: radial-gradient(
+    circle at 30% 30%,
+    rgba(122, 199, 255, 0.95),
+    rgba(122, 199, 255, 0.85) 40%,
+    rgba(122, 199, 255, 0.75) 75%
+  );
+  border-color: var(--accent);
+  box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.35),
+    0 0 12px rgba(122, 199, 255, 0.45);
+}
+
+/* Checkmark/dot centered precisely */
+input[type="checkbox"]::after,
+input[type="radio"]::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+}
+
+input[type="checkbox"]:checked::after {
+  content: "✓";
+  color: #0f1222;
+  font-weight: 800;
+  font-size: 18px;
+  line-height: 1;
+}
+
+input[type="radio"]:checked::after {
+  content: "";
+  width: 12px;
+  height: 12px;
+  background: var(--bg-900);
+  border-radius: 50%;
+  box-shadow: inset 0 0 2px rgba(255, 255, 255, 0.25);
+  top: 5px;
+  left: 5px;
+}
+
+/* Focus styles */
+input[type="checkbox"]:focus-visible,
+input[type="radio"]:focus-visible,
+input[type="text"]:focus-visible,
+input[type="url"]:focus-visible,
+button:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--ring), 0 0 26px var(--ring-outer);
+}
+
+input[type="text"],
+input[type="url"] {
+  padding: 12px 16px;
+  font-size: 1rem;
+  background: rgba(26, 26, 46, 0.6);
+  border: 1.5px solid var(--muted-500);
+  border-radius: var(--radius-md);
+  color: var(--text-100);
+  transition: border-color 0.3s ease, box-shadow 0.3s ease,
+    background-color 0.25s ease;
+}
+
+input[type="text"]:focus,
+input[type="url"]:focus {
+  border-color: rgba(122, 199, 255, 0.7);
+  box-shadow: 0 0 0 2px rgba(122, 199, 255, 0.35),
+    0 0 22px rgba(122, 199, 255, 0.25);
+  background: rgba(26, 26, 46, 0.8);
+  outline-offset: 0;
+}
+
+button {
+  font-weight: 700;
+  cursor: pointer;
+  border-radius: var(--radius-md);
+  border: none;
+  padding: 14px 22px;
+  background: linear-gradient(
+    180deg,
+    var(--accent),
+    color-mix(in oklab, var(--accent), black 10%)
+  );
+  color: #0b0b16;
+  box-shadow: 0 10px 22px rgba(122, 199, 255, 0.28),
+    0 0 0 0 rgba(122, 199, 255, 0);
+  transition: box-shadow 0.3s ease, transform 0.15s ease;
+}
+
+button:hover {
+  box-shadow: 0 14px 28px rgba(122, 199, 255, 0.38),
+    0 0 36px rgba(179, 150, 240, 0.25);
+  transform: translateY(-1px);
+}
+
+button:active {
+  transform: translateY(1px);
+}
+
+.section {
+  background: linear-gradient(
+        180deg,
+        rgba(40, 45, 75, 0.6),
+        rgba(40, 45, 75, 0.45)
+      )
+      padding-box,
+    radial-gradient(
+        120% 120% at 10% -10%,
+        rgba(122, 199, 255, 0.22),
+        rgba(179, 150, 240, 0.12),
+        transparent 60%
+      )
+      border-box;
+  border: 1px solid rgba(186, 179, 230, 0.08);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-soft), 0 0 0 0 rgba(122, 199, 255, 0);
+  padding: var(--space-5);
+  transition: border-color 0.3s ease, box-shadow 0.4s ease;
+}
+
+.section:hover {
+  border-color: rgba(186, 179, 230, 0.12);
+  box-shadow: var(--shadow-soft), 0 0 24px rgba(122, 199, 255, 0.18),
+    0 0 42px rgba(179, 150, 240, 0.12);
+}
+
+.status-message {
+  color: var(--success-neon);
+  text-shadow: 0 0 10px rgba(165, 240, 255, 0.4);
+  font-weight: 600;
+  margin-top: var(--space-3);
+  display: inline-block;
+}
+
+.status-message::before {
+  content: "";
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  margin-right: 10px;
+  border-radius: 50%;
+  vertical-align: middle;
+  background: var(--success-neon);
+  box-shadow: 0 0 12px rgba(165, 240, 255, 0.9);
+  animation: statusPulse 2s ease-in-out infinite alternate;
+}
+
+/* Animations */
+@keyframes starDrift {
+  0% {
+    background-position: 0 0, 0 0, 0 0, 0 0, 0 0;
+  }
+  100% {
+    background-position: -160px 0, 220px 0, -260px 0, 300px 0, -340px 0;
+  }
+}
+
+@keyframes auroraSway {
+  0% {
+    transform: translateX(0) translateZ(0);
+  }
+  100% {
+    transform: translateX(60px) translateZ(0);
+  }
+}
+
+@keyframes titleGlow {
+  0%,
+  100% {
+    text-shadow: 0 0 12px rgba(122, 199, 255, 0.35),
+      0 0 26px rgba(179, 150, 240, 0.25);
+  }
+  50% {
+    text-shadow: 0 0 20px rgba(122, 199, 255, 0.5),
+      0 0 40px rgba(179, 150, 240, 0.4);
+  }
+}
+
+@keyframes statusPulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.75;
+    transform: scale(1.2);
+  }
+}
