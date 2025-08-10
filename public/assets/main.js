@@ -1,16 +1,67 @@
 let currentProxyMode = "corrosion"; // default fallback
 
+// Function to get proxy backend from localStorage
+function getProxyBackendFromStorage() {
+  return localStorage.getItem("settings_proxyBackend") || "corrosion";
+}
+
+// Function to notify server of proxy backend change
+async function setProxyBackend(backend) {
+  try {
+    const response = await fetch("/api/set-proxy-backend", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ backend }),
+    });
+
+    const result = await response.json();
+    if (result.success) {
+      currentProxyMode = result.mode;
+      console.log(`Proxy backend changed to: ${result.mode}`);
+    } else {
+      console.error("Failed to change proxy backend:", result.error);
+    }
+  } catch (error) {
+    console.error("Failed to change proxy backend:", error);
+  }
+}
+
 async function fetchProxyMode() {
   try {
+    // First check localStorage for user preference
+    const storedBackend = getProxyBackendFromStorage();
+
     const res = await fetch("/api/proxy-mode");
     if (res.ok) {
       const data = await res.json();
-      currentProxyMode = data.mode;
+
+      // If stored backend differs from server backend, update server
+      if (storedBackend !== data.mode) {
+        await setProxyBackend(storedBackend);
+      } else {
+        currentProxyMode = data.mode;
+      }
     }
   } catch (e) {
     console.warn("Failed to fetch proxy mode", e);
+    // Fallback to localStorage setting
+    currentProxyMode = getProxyBackendFromStorage();
   }
 }
+
+// Listen for proxy backend changes from settings
+window.addEventListener("message", (event) => {
+  if (event.data && event.data.type === "proxy_backend_changed") {
+    setProxyBackend(event.data.value);
+  }
+
+  // Existing message listeners...
+  if (event.data && event.data.type === "settings_showBookmarks_changed") {
+    updateBookmarkVisibility();
+  }
+});
 
 // --- Bookmarks UI + Behavior Logic ---
 function renderBookmarks() {
@@ -255,7 +306,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   } else {
     console.warn("Input field or popup not found.");
   }
-})();
+});
 
 // ===== Keybind Redirect Logic - Runs only on top-level index.html =====
 (function () {

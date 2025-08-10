@@ -86,6 +86,34 @@
         pointer-events: none; /* Ensures only one symbol and no interference */
       }
 
+      input[type="radio"] {
+        width: 20px;
+        height: 20px;
+        cursor: pointer;
+        border: 2px solid #fffb00;
+        border-radius: 50%;
+        background: transparent;
+        transition: background-color 0.25s ease, box-shadow 0.3s ease;
+        position: relative;
+        box-sizing: border-box;
+      }
+
+      input[type="radio"]:checked {
+        background: #fffb00;
+        box-shadow: 0 0 8px #fffb00 inset;
+      }
+
+      input[type="radio"]:checked::after {
+        content: "●";
+        color: #1a1a2e;
+        font-weight: bold;
+        position: absolute;
+        top: -2px;
+        left: 3px;
+        font-size: 12px;
+        pointer-events: none;
+      }
+
       input[type="text"],
       input[type="url"] {
         padding: 12px 16px;
@@ -153,6 +181,25 @@
       .section:hover {
         box-shadow: 0 0 25px #fffb00, inset 0 0 14px #fffb00;
       }
+
+      .proxy-options {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        margin-top: 10px;
+      }
+
+      .proxy-option {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .status-message {
+        color: #0f0;
+        margin-top: 10px;
+        font-size: 1em;
+      }
     </style>
   </head>
   <body>
@@ -167,6 +214,32 @@
       <input type="checkbox" id="showBookmarksToggle" />
       Show Bookmarks
     </label>
+
+    <div class="section">
+      <label>Proxy Backend Selection</label>
+      <div class="proxy-options">
+        <div class="proxy-option">
+          <input
+            type="radio"
+            id="corrosionProxy"
+            name="proxyBackend"
+            value="corrosion"
+          />
+          <label for="corrosionProxy">Corrosion Proxy</label>
+        </div>
+
+        <div class="proxy-option">
+          <input
+            type="radio"
+            id="alloyProxy"
+            name="proxyBackend"
+            value="alloy"
+          />
+          <label for="alloyProxy">Alloy Proxy</label>
+        </div>
+      </div>
+      <div id="proxyStatusMessage" class="status-message"></div>
+    </div>
 
     <div class="section">
       <label>
@@ -204,6 +277,10 @@
       const keybindInput = document.getElementById("keybindInput");
       const redirectUrlInput = document.getElementById("redirectUrl");
       const statusMessage = document.getElementById("statusMessage");
+      const proxyRadios = document.querySelectorAll(
+        'input[name="proxyBackend"]'
+      );
+      const proxyStatusMessage = document.getElementById("proxyStatusMessage");
 
       const DEFAULT_KEYBIND = "ctrl+shift+r";
 
@@ -227,6 +304,48 @@
           },
           "*"
         );
+      });
+
+      // Proxy Backend Management
+      function loadProxyBackend() {
+        const savedBackend =
+          localStorage.getItem("settings_proxyBackend") || "corrosion";
+        const radioButton = document.querySelector(
+          `input[value="${savedBackend}"]`
+        );
+        if (radioButton) {
+          radioButton.checked = true;
+        }
+      }
+
+      function saveProxyBackend() {
+        const selectedRadio = document.querySelector(
+          'input[name="proxyBackend"]:checked'
+        );
+        if (!selectedRadio) return;
+
+        const selectedBackend = selectedRadio.value;
+        localStorage.setItem("settings_proxyBackend", selectedBackend);
+
+        // Notify parent window of proxy backend change
+        window.parent.postMessage(
+          {
+            type: "proxy_backend_changed",
+            value: selectedBackend,
+          },
+          "*"
+        );
+
+        proxyStatusMessage.textContent = `Proxy backend set to ${selectedBackend}. Changes will take effect immediately.`;
+        setTimeout(() => (proxyStatusMessage.textContent = ""), 3000);
+      }
+
+      // Initialize proxy backend settings
+      loadProxyBackend();
+
+      // Add event listeners for proxy backend selection
+      proxyRadios.forEach((radio) => {
+        radio.addEventListener("change", saveProxyBackend);
       });
 
       // Load keybind settings
