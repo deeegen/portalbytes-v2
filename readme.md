@@ -29,7 +29,7 @@ Future plans include exposing this toggle through a web-based control panel.
 ## Changelog
 
 ### August 10, 2025
-- Added front end config to switch between backends! (Might not work on render URL)
+- Added front end config to switch between backends! (Might not be as good on render URL, just refresh after you change your setting)
 
 ### August 5, 2025
 - Added server-side configuration to switch between `corrosion` and `alloy` backends (work in progress).
